@@ -5,9 +5,11 @@
 # Mr.Krabs Desktop (蟹老板桌面客户端)
 
 **企业级安全的个人 AI Agent 一体化桌面客户端（项目仍在朝向Local-first AI-native Runtime Workspace迈进中）**
-**一句人话：
 
-用户用自然语言启动任务，
+
+**一句人话：**
+
+**用户用自然语言启动任务，
 系统在本地 Runtime 中持续运行，
 上下文、资产、执行状态持续存在，
 Chat 只是入口，
