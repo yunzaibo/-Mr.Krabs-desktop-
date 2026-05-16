@@ -28,6 +28,7 @@ export function createChatSendController(params: {
   refreshSendingState: (sending: Ref<boolean>, draftSending: Ref<boolean>) => void
   setLocalSessionTitle: (sessionId: string, title: string) => void
   setPendingSuggestedTitleExpectation: (sessionId: string, expectedTitle: string | null) => void
+  pendingSuggestedTitleExpectation: Ref<Record<string, string>>
   pendingAutoTitleSync: Map<string, Promise<void>>
   persistMessage: (message: ChatMessage, sessionId: string) => Promise<boolean>
   handleSendError: (
@@ -49,12 +50,13 @@ export function createChatSendController(params: {
     createId,
     defaultSessionTitle = DEFAULT_SESSION_TITLE,
     ensureSession,
-    clearSessionCancelled,
-    isSessionCancelled,
+    clearSessionCancelled: _clearSessionCancelled,
+    isSessionCancelled: _isSessionCancelled,
     isSessionStreaming,
     refreshSendingState,
     setLocalSessionTitle,
     setPendingSuggestedTitleExpectation,
+    pendingSuggestedTitleExpectation,
     pendingAutoTitleSync,
     persistMessage,
     handleSendError,
@@ -116,7 +118,7 @@ export function createChatSendController(params: {
     registerChatTask($chatTask)
 
     try {
-      const backendText = options?.backendText ?? text
+      const _backendText = options?.backendText ?? text
       const requestId = $taskId
       const userMessage: ChatMessage = {
         id: requestId,

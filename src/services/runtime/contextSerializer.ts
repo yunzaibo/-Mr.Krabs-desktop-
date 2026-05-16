@@ -11,6 +11,7 @@
 
 import type { RuntimeContext } from '@/types'
 import type { ContextSnapshot } from '@/types/persistence'
+import type { SkillLayer as SkillLayerSkill } from '@/types/skill'
 
 /**
  * 序列化 RuntimeContext → ContextSnapshot。
@@ -23,7 +24,7 @@ export function serializeContext(ctx: RuntimeContext): ContextSnapshot {
     taskId: ctx.taskId,
     taskType: ctx.taskType,
     system: ctx.system ?? null,
-    skill: ctx.skill ?? null,
+    skill: (ctx.skill as unknown as SkillLayerSkill | null) ?? null,
     task: ctx.task ?? null,
     execution: ctx.execution ?? null,
     memory: ctx.memory ?? null,
@@ -45,7 +46,7 @@ export function deserializeContext(snapshot: ContextSnapshot): RuntimeContext {
     taskId: snapshot.taskId,
     taskType: snapshot.taskType,
     system: snapshot.system ?? undefined,
-    skill: snapshot.skill ?? undefined,
+    skill: (snapshot.skill as unknown as import('@/types/context').SkillLayer | undefined) ?? undefined,
     task: snapshot.task ?? undefined,
     execution: snapshot.execution ?? undefined,
     memory: snapshot.memory ?? undefined,

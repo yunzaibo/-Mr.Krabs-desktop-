@@ -27,7 +27,6 @@ import { createChatStoreSelectors } from './chat-store-selectors'
 import { createBoundChatStreamController } from './chat-stream-bound-controller'
 import { createChatStreamController } from './chat-stream-controller'
 import { createChatThinkingTimerController } from './chat-thinking-timer'
-import { useSettingsStore } from './settings'
 
 export const useChatStore = defineStore('chat', () => {
   const state = createChatStoreState()
@@ -202,6 +201,7 @@ export const useChatStore = defineStore('chat', () => {
     refreshSendingState: boundStreamController.refreshSendingState,
     setLocalSessionTitle: sessionController.setLocalSessionTitle,
     setPendingSuggestedTitleExpectation: sessionController.setPendingSuggestedTitleExpectation,
+    pendingSuggestedTitleExpectation,
     pendingAutoTitleSync: runtime.pendingAutoTitleSync,
     persistMessage: msgSvc.persistMessage,
     handleSendError: boundStreamController.handleSendError,

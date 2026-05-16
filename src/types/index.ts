@@ -32,9 +32,11 @@ export type {
 } from './skill'
 export type { CronJob, CronJobInput, Task, TaskInput, TaskOutput, TaskResult, TaskStatus, TaskType, TaskMetadata, TaskError } from './task'
 export type {
-  SkillMeta, ContextLayerStatus, SystemLayer, SkillLayer, TaskLayer, ExecutionLayer, MemoryLayer,
+  SkillMeta, SkillPackage, SkillReference, ContextLayerStatus, SystemLayer, TaskLayer, ExecutionLayer, MemoryLayer,
   RuntimeContext, ContextSummary,
 } from './context'
+export type { SkillLayer as ContextSkillLayer } from './context'
+export type { RecoveryLayer } from './recovery'
 export type { KnowledgeDoc, KnowledgeSearchResult } from './knowledge'
 export type {
   CanvasNode,

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { Component } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { MessageSquare, Bot, Puzzle, Wrench, GitBranch, Zap, XCircle, ChevronDown } from 'lucide-vue-next'
 import EmptyState from '@/components/common/EmptyState.vue'
-import type { Task, TaskType } from '@/types'
+import type { TaskType } from '@/types'
 
 const taskStore = useTaskStore()
 

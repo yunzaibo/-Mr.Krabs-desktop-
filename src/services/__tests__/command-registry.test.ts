@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { getCommandRegistry } from '../commandRegistry'
-import type { CommandDefinition } from '../commandRegistry'
 import type { SkillCommand } from '@/types/skill'
 
 // ── Helpers ───────────────────────────────────────

@@ -15,8 +15,8 @@ import { setActivePinia, createPinia } from 'pinia'
 // Mocks — vi.mock 会在编译时提升，先声明 mock 函数再使用
 // ════════════════════════════════════════════════════════════
 
-const mockExecuteTask = vi.fn<[string], Promise<void>>()
-const mockGetExecutionResult = vi.fn<[string], { kind: 'text'; content: string } | undefined>()
+const mockExecuteTask = vi.fn()
+const mockGetExecutionResult = vi.fn()
 const mockRuntimeCompleteTask = vi.fn()
 const mockRuntimeFailTask = vi.fn()
 

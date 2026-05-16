@@ -103,7 +103,7 @@ describe('SkillLoader', () => {
 
       const pkg = await loader.loadSkill('s1', { loadReferences: true })
       expect(pkg.references).toHaveLength(2)
-      expect(pkg.references[0].relativePath).toBe('ref1.md')
+      expect(pkg.references[0]!.relativePath).toBe('ref1.md')
     })
   })
 

@@ -4,7 +4,6 @@
  *
  * 消费 WorkspaceTaskProjection[]，不 import Runtime store/types。
  */
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   MessageSquare, Bot, Puzzle, Wrench, GitBranch, Zap,
@@ -15,7 +14,7 @@ import type { TaskType } from '@/types'
 
 const { t } = useI18n()
 
-const props = defineProps<{
+const _props = defineProps<{
   activeTasks: WorkspaceTaskProjection[]
   completedTasks: WorkspaceTaskProjection[]
   selectedTaskId: string | null

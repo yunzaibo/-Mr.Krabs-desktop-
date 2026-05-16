@@ -23,7 +23,7 @@ const {
   selectedNarrativeProjection,
   selectedResultProjection,
   selectTask,
-  activeCount,
+  activeCount: _activeCount,
 } = useWorkspace()
 </script>
 

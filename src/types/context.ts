@@ -11,6 +11,7 @@ import type { CapabilityName } from './capability'
 import type { ExecutionState, ExecutionStage, ExecutionIntermediateState } from './execution'
 import type { TaskType, TaskStatus, TaskInput, TaskResult, TaskError, TaskMetadata } from './task'
 import type { AssetCollection } from './asset'
+import type { RecoveryLayer } from './recovery'
 
 // ─── 层状态 ─────────────────────────────────────────────
 

@@ -76,7 +76,7 @@ export class SkillLoader {
     let parsed: Record<string, unknown>
     try {
       parsed = await this.loadSkillJson(safeId)
-    } catch (e) {
+    } catch (_e) {
       throw skillError('SKILL_NOT_FOUND', `skill.json 不存在: skills/${safeId} (baseDir=${this.baseDir})`)
     }
 

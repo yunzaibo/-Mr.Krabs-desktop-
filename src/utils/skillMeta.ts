@@ -22,11 +22,11 @@ export function buildSkillMeta(
 ): SkillMeta {
   return {
     skillId,
-    displayName: parsed.display_name ?? parsed.name ?? skillId,
-    version: parsed.version ?? '0.0.0',
-    description: parsed.description ?? '',
+    displayName: (parsed.display_name ?? parsed.name ?? skillId) as string,
+    version: (parsed.version ?? '0.0.0') as string,
+    description: (parsed.description ?? '') as string,
     capabilities: Array.isArray(parsed.capabilities) ? parsed.capabilities : [],
-    entry: parsed.entry ?? 'SKILL.md',
+    entry: (parsed.entry ?? 'SKILL.md') as string,
     path: `skills/${skillId}`,
     source,
     triggers: Array.isArray(parsed.triggers) ? parsed.triggers : undefined,

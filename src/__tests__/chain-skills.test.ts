@@ -136,7 +136,8 @@ describe('Chain F: Skills -> Hub -> Install', () => {
     expect(mockApiPost).toHaveBeenCalledWith('/api/v1/skills/install', {
       source: '/path/to/skill',
     })
-    expect(result.name).toBe('my-skill')
+    expect(result.success).toBe(true)
+    expect(result.message).toContain('my-skill')
   })
 
   it('F5: uninstallSkill calls DELETE /api/v1/skills/:name', async () => {

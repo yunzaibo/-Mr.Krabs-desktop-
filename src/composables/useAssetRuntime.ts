@@ -62,7 +62,7 @@ export function useAssetRuntime() {
     const index = collection.refs.findIndex(r => r.assetId === assetId)
     if (index === -1) return null
 
-    const newRef = markInvalidated(collection.refs[index])
+    const newRef = markInvalidated(collection.refs[index]!)
     const refs = [...collection.refs]
     refs[index] = newRef
 
@@ -90,7 +90,7 @@ export function useAssetRuntime() {
     let changed = false
     const refs = collection.refs.map((ref, i) => {
       const result = results[i]
-      if (result.status === 'fulfilled' && ref.status !== result.value) {
+      if (result && result.status === 'fulfilled' && ref.status !== result.value) {
         changed = true
         return { ...ref, status: result.value }
       }

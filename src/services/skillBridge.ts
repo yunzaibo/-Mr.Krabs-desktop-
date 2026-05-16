@@ -10,6 +10,7 @@
 
 import type { Ref } from 'vue'
 import type { ChatMessage, SkillMeta, Task } from '@/types'
+import type { SkillPackageMeta } from '@/types/skill'
 import { SkillRegistry } from './skillRegistry'
 import { parseSkillScripts, executeScript } from './skillExecutor'
 import type { ScriptResult } from './skillExecutor'
@@ -24,12 +25,12 @@ import { BaseDirectory, resourceDir } from '@tauri-apps/api/path'
 import { readTextFile } from '@tauri-apps/plugin-fs'
 import { getCommandRegistry } from './commandRegistry'
 import { getAgentRegistry, type AgentDefinition } from './agentRegistry'
-import { invokeAgent, invokeAgentBySkill } from './agentExecutor'
+import { invokeAgent } from './agentExecutor'
 import type { SkillCommand, SkillAgent, SkillHook } from '@/types/skill'
 import { getHookRegistry, type HookDefinition, type HookEvent } from './hookRegistry'
 import { executeHooksForEvent } from './hookExecutor'
 import { buildSkillMeta } from '@/utils/skillMeta'
-import { getTopMatch, type IntentMatch } from './intentMatcher'
+import { getTopMatch } from './intentMatcher'
 
 // ── Types ────────────────────────────────────────
 
@@ -75,7 +76,7 @@ function parseCommandTrigger(
 ): { trigger: string; commandInput: string } | null {
   const match = text.match(COMMAND_TRIGGER_RE)
   if (!match) return null
-  return { trigger: `/${match[1]}`, commandInput: match[2] }
+  return { trigger: `/${match[1]}`, commandInput: match[2] ?? '' }
 }
 
 /**
@@ -89,7 +90,7 @@ function parseAgentTrigger(
 ): { agentName: string; agentInput: string } | null {
   const match = text.match(AGENT_TRIGGER_RE)
   if (!match) return null
-  return { agentName: match[1], agentInput: match[2] }
+  return { agentName: match[1] ?? '', agentInput: match[2] ?? '' }
 }
 
 /**
@@ -254,7 +255,7 @@ export function parseSkillInvocation(
 ): { skillName: string; skillInput: string } | null {
   const match = text.match(SKILL_INVOCATION_RE)
   if (!match) return null
-  return { skillName: match[1], skillInput: match[2] }
+  return { skillName: match[1] ?? '', skillInput: match[2] ?? '' }
 }
 
 /**
@@ -569,7 +570,7 @@ export async function tryExecuteSkill(
  * 若不存在则抛出错误。
  */
 export async function executeSkillScript(
-  skillMeta: SkillMeta,
+  skillMeta: SkillPackageMeta,
   scriptName: string,
   input?: string,
 ): Promise<ScriptResult> {

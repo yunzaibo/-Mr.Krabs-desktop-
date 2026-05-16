@@ -16,7 +16,7 @@
  * @see docs/agents-OS/Context-Contract.md
  */
 
-import type { RuntimeContext, SystemLayer, TaskLayer, SkillLayer, ExecutionLayer, MemoryLayer } from '@/types'
+import type { RuntimeContext } from '@/types'
 import type { SkillPackage } from '@/types'
 import type { Task } from '@/types'
 import { DEFAULT_ALLOWED_CAPABILITIES } from '@/types/capability'

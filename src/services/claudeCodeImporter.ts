@@ -121,10 +121,11 @@ export async function generateSkillJson(
   }
 
   // Remove undefined experimental if empty
+  const exp = meta.experimental as Record<string, unknown> | undefined
   if (
-    meta.experimental &&
-    !Array.isArray(meta.experimental.agents) &&
-    !Array.isArray(meta.experimental.hooks)
+    exp &&
+    !Array.isArray(exp.agents) &&
+    !Array.isArray(exp.hooks)
   ) {
     delete meta.experimental
   }

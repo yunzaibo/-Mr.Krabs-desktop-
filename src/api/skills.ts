@@ -12,12 +12,6 @@ export async function getSkills() {
 
 export type SkillInstallType = 'file' | 'url' | 'clawhub'
 
-interface SkillInstallResult {
-  name: string
-  description?: string
-  version?: string
-  message: string
-}
 
 /** 安装 Skill — 支持本地文件、URL、ClawHub 三种来源（通过 Tauri command） */
 export async function installSkill(source: string, type?: SkillInstallType): Promise<SkillStatusUpdateResult> {

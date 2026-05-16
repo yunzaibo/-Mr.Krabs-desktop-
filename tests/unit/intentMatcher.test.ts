@@ -3,7 +3,6 @@ import {
   matchIntent,
   calculateConfidence,
   getTopMatch,
-  type IntentMatch,
 } from '@/services/intentMatcher'
 import type { SkillMeta } from '@/types'
 

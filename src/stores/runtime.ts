@@ -565,7 +565,7 @@ export const useRuntimeStore = defineStore('runtime', () => {
     const result = asset.buildInvalidation(collection, assetId)
     if (!result) return
 
-    ctx.resources.asset = result.updated
+    ctx.resources!.asset = result.updated
 
     writeTimelineEvent({
       type: 'asset.invalidated',
@@ -595,7 +595,7 @@ export const useRuntimeStore = defineStore('runtime', () => {
     const { updated, changed } = await asset.checkHealth(collection)
 
     if (changed) {
-      ctx.resources.asset = updated
+      ctx.resources!.asset = updated
       revision.value++
     }
     // reconcile 不 append timeline event（noisy observation）
@@ -671,7 +671,7 @@ export const useRuntimeStore = defineStore('runtime', () => {
 
     const report = recovery.detect(ctx)
 
-    if (report.corrupted) {
+    if (report && report.corrupted) {
       writeTimelineEvent({
         type: 'recovery.corruption_detected',
         taskId,
@@ -758,11 +758,11 @@ export const useRuntimeStore = defineStore('runtime', () => {
       }
 
       // Recovery 恢复 — 仅恢复 RecoveryLayer，不做 auto assess/detect
-      if (snapshot.recovery) {
+      if (snapshot.resources?.recovery) {
         const ctx = manager.getContext(snapshot.taskId)
         if (ctx) {
           if (!ctx.resources) ctx.resources = {}
-          ctx.resources.recovery = snapshot.recovery
+          ctx.resources.recovery = snapshot.resources.recovery
         }
       }
     }
@@ -781,9 +781,9 @@ export const useRuntimeStore = defineStore('runtime', () => {
    * Serializer boundary 不做此转换（保持 pure），
    * Runtime 恢复时在此统一处理。
    */
-  function normalizeLayer<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  function normalizeLayer<T extends object>(obj: T): Record<string, unknown> {
     const result: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       result[key] = value === null ? undefined : value
     }
     return result

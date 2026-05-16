@@ -6,14 +6,14 @@
  * 保留 raw events 视图作为 toggle 备选。
  * 消费 Projection DTO，不 import RuntimeEvent。
  */
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineItemProjection, TimelineNarrativeGroup, NarrativePhase } from '@/types/workspace'
 import TimelineItem from '@/components/inspector/TimelineItem.vue'
 
 const { t } = useI18n()
 
-const props = defineProps<{
+const _props = defineProps<{
   items: TimelineItemProjection[]
   narrativeItems: TimelineNarrativeGroup[]
   taskId: string | null

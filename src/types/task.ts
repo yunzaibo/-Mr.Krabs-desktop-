@@ -13,8 +13,8 @@ export type TaskType = 'chat' | 'agent' | 'skill' | 'tool' | 'workflow' | 'autom
 
 /** Task 元数据 */
 export interface TaskMetadata {
-  source: string
-  createdAt: string
+  source?: string
+  createdAt?: string
   startedAt?: string
   completedAt?: string
   tags?: string[]

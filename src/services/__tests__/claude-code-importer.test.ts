@@ -123,7 +123,7 @@ describe('claudeCodeImporter', () => {
       expect(result.skillId).toBe('my-skill')
       expect(mockWriteTextFile).toHaveBeenCalledTimes(1)
 
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written.name).toBe('my-skill')
       expect(written.version).toBe('0.1.0')
       expect(written.entry).toBe('SKILL.md')
@@ -145,7 +145,7 @@ describe('claudeCodeImporter', () => {
       const result = await generateSkillJson('/src/my-skill', '/target')
 
       expect(result.skillId).toBe('my-awesome-skill')
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written.display_name).toBe('my-awesome-skill')
       expect(written.description).toBe('A cool skill')
     })
@@ -160,7 +160,7 @@ describe('claudeCodeImporter', () => {
 
       await generateSkillJson('/src/my-skill', '/target')
 
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written.experimental.agents).toHaveLength(1)
       expect(written.experimental.agents[0].name).toBe('researcher')
       expect(written.experimental.agents[0].file).toBe('.claude/agents/researcher.md')
@@ -176,7 +176,7 @@ describe('claudeCodeImporter', () => {
 
       await generateSkillJson('/src/my-skill', '/target')
 
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written.experimental.hooks).toHaveLength(1)
       expect(written.experimental.hooks[0].name).toBe('pre-build')
       expect(written.experimental.hooks[0].event).toBe('pre-task')
@@ -187,7 +187,7 @@ describe('claudeCodeImporter', () => {
 
       await generateSkillJson('/src/my-skill', '/target')
 
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written.commands).toBeUndefined()
       expect(written.experimental).toBeUndefined()
     })
@@ -197,7 +197,7 @@ describe('claudeCodeImporter', () => {
 
       await generateSkillJson('/src/my-skill', '/target')
 
-      const written = JSON.parse(mockWriteTextFile.mock.calls[0][1])
+      const written = JSON.parse(mockWriteTextFile.mock.calls[0]![1] as string)
       expect(written._trust).toEqual({
         source: 'claude-code',
         verified: false,

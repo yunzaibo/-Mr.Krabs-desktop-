@@ -14,8 +14,6 @@
  * - 代理执行（由 AgentExecutor 负责）
  */
 
-import type { SkillAgent } from '@/types/skill'
-
 // ─── Types ─────────────────────────────────────────────
 
 /** 代理定义（从 SkillAgent + skillId 构建） */

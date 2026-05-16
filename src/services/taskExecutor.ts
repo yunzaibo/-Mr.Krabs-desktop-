@@ -52,7 +52,7 @@ export class ChatTaskExecutor implements ContextAwareExecutor {
       return this.executeChat(task)
     }
     // 桩实现：未注入回调时返回占位输出
-    return { result: null, artifacts: [] }
+    return { result: { kind: 'text', content: '' }, artifacts: [] }
   }
 
   /** Context-aware 执行 — 读取并写入 RuntimeContext */
@@ -83,7 +83,7 @@ export class AgentTaskExecutor implements ContextAwareExecutor {
     if (this.executeAgent) {
       return this.executeAgent(task)
     }
-    return { result: null, artifacts: [] }
+    return { result: { kind: 'text', content: '' }, artifacts: [] }
   }
 
   /** Context-aware 执行 — 读取并写入 RuntimeContext */
@@ -114,7 +114,7 @@ export class SkillTaskExecutor implements ContextAwareExecutor {
     if (this.executeSkill) {
       return this.executeSkill(task)
     }
-    return { result: null, artifacts: [] }
+    return { result: { kind: 'text', content: '' }, artifacts: [] }
   }
 
   /** Context-aware 执行 — 读取并写入 RuntimeContext */
@@ -148,7 +148,7 @@ function stubExecuteWithContext(_task: Task, context: RuntimeContext): TaskOutpu
       lastUpdate: now(),
     }
   }
-  return { result: null, artifacts: [] }
+  return { result: null as unknown as import('@/types').TaskResult, artifacts: [] }
 }
 
 // ─── 工厂函数 ─────────────────────────────────────────

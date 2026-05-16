@@ -120,7 +120,7 @@ export async function invokeAgentBySkill(
   }
 
   if (agents.length === 1) {
-    return invokeAgentWithDef(agents[0], input, options)
+    return invokeAgentWithDef(agents[0]!, input, options)
   }
 
   // 多代理 — 返回列表供选择

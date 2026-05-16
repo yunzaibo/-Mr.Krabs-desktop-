@@ -49,8 +49,8 @@ describe('HookRegistry', () => {
 
       const loadHooks = registry.getHooksForEvent('on-load')
       expect(loadHooks).toHaveLength(2)
-      expect(loadHooks[0].hookName).toBe('load-1')
-      expect(loadHooks[1].hookName).toBe('load-2')
+      expect(loadHooks[0]!.hookName).toBe('load-1')
+      expect(loadHooks[1]!.hookName).toBe('load-2')
     })
 
     it('returns empty array for unregistered event', () => {
@@ -84,7 +84,7 @@ describe('HookRegistry', () => {
       registry.unregisterSkill('skill-a')
 
       expect(registry.getHooksForEvent('on-load')).toHaveLength(1)
-      expect(registry.getHooksForEvent('on-load')[0].skillId).toBe('skill-b')
+      expect(registry.getHooksForEvent('on-load')[0]!.skillId).toBe('skill-b')
     })
 
     it('no-ops for unknown skill', () => {

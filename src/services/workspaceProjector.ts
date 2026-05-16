@@ -70,7 +70,7 @@ function formatTime(iso: string): string {
  */
 export function projectTask(
   task: Task,
-  summary?: ContextSummary,
+  _summary?: ContextSummary,
 ): WorkspaceTaskProjection {
   return {
     taskId: task.id,
@@ -423,7 +423,7 @@ export function projectTimelineNarrative(events: RuntimeEvent[]): TimelineNarrat
     }
 
     // minor → check if same phase as buffer
-    if (buffer.length > 0 && buffer[0].phase !== item.phase) {
+    if (buffer.length > 0 && buffer[0]!.phase !== item.phase) {
       flushBuffer()
     }
     buffer.push(item)
@@ -434,14 +434,14 @@ export function projectTimelineNarrative(events: RuntimeEvent[]): TimelineNarrat
 }
 
 function buildNarrativeGroup(items: NarrativeItem[], isCollapsed: boolean): TimelineNarrativeGroup {
-  const first = items[0]
-  const last = items[items.length - 1]
+  const first = items[0]!
+  const last = items[items.length - 1]!
   const startMs = new Date(first.event.timestamp).getTime()
   const endMs = new Date(last.event.timestamp).getTime()
   const durationMs = endMs - startMs
 
   // title: milestone/major 用首事件 label，minor 组用 phase 标题
-  const anchorItem = items[0]
+  const anchorItem = items[0]!
   const usePhaseTitle = items.length > 1 && items.every(it => it.significance === 'minor')
   const title = usePhaseTitle
     ? PHASE_TITLE_KEYS[anchorItem.phase]

@@ -58,7 +58,7 @@ describe('SkillRegistry', () => {
 
       const skills = await registry.getAllSkills()
       expect(skills).toHaveLength(1)
-      expect(skills[0].skillId).toBe('my-skill')
+      expect(skills[0]!.skillId).toBe('my-skill')
     })
 
     it('sanitizes directory names with invalid chars', async () => {
@@ -89,7 +89,7 @@ describe('SkillRegistry', () => {
 
       const skills = await registry.getAllSkills()
       expect(skills).toHaveLength(1)
-      expect(skills[0].skillId).toBe('hidden')
+      expect(skills[0]!.skillId).toBe('hidden')
     })
 
     it('skips non-directory entries', async () => {
@@ -115,8 +115,8 @@ describe('SkillRegistry', () => {
 
       const skills = await registry.getAllSkills()
       expect(skills).toHaveLength(1)
-      expect(skills[0].skillId).toBe('fallback-skill')
-      expect(skills[0].version).toBe('0.0.0')
+      expect(skills[0]!.skillId).toBe('fallback-skill')
+      expect(skills[0]!.version).toBe('0.0.0')
     })
 
     it('skips when both skill.json and SKILL.md missing', async () => {
@@ -169,7 +169,7 @@ describe('SkillRegistry', () => {
 
       const skills = await registry.getAllSkills()
       expect(skills).toHaveLength(1)
-      expect(skills[0].displayName).toBe('Official')
+      expect(skills[0]!.displayName).toBe('Official')
     })
   })
 

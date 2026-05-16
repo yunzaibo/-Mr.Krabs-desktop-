@@ -34,7 +34,7 @@ export const useTaskStore = defineStore('tasks', () => {
   function dequeue(): Task | undefined {
     const idx = taskQueue.findIndex((t) => t.status === 'pending')
     if (idx === -1) return undefined
-    const task = taskQueue[idx]
+    const task = taskQueue[idx]!
     task.status = 'running'
     task.metadata = { ...task.metadata, startedAt: new Date().toISOString() }
     activeTasks.value.push(task)

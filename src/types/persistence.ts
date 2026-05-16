@@ -7,7 +7,9 @@
  * @see .workflow/.scratchpad/persistence-runtime-skeleton-analyze.md
  */
 
-import type { TaskType, SystemLayer, SkillLayer, TaskLayer, ExecutionLayer, MemoryLayer } from './context'
+import type { TaskType } from './task'
+import type { SystemLayer, TaskLayer, ExecutionLayer, MemoryLayer } from './context'
+import type { SkillLayer } from './skill'
 import type { RuntimeEvent } from './timeline'
 import type { AssetCollection } from './asset'
 import type { RecoveryLayer } from './recovery'

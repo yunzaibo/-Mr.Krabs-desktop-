@@ -102,7 +102,7 @@ export async function executeHook(
   hook: HookDefinition,
   context?: HookExecuteContext,
 ): Promise<HookResult> {
-  const timeout = hook.timeout ?? DEFAULT_HOOK_TIMEOUT
+  const _timeout = hook.timeout ?? DEFAULT_HOOK_TIMEOUT
 
   // 读取脚本文件
   const scriptContent = await readHookScript(hook.skillId, hook.scriptPath)

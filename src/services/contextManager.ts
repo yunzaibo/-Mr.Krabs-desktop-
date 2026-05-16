@@ -9,10 +9,9 @@
 
 import type {
   RuntimeContext,
-  ContextLayerStatus,
   SystemLayer,
   TaskLayer,
-  SkillLayer,
+  ContextSkillLayer,
   ExecutionLayer,
   MemoryLayer,
 } from '@/types'
@@ -179,7 +178,7 @@ export class ContextManager {
         ctx.system = ctx.system ? { ...ctx.system, ...data } as SystemLayer : data as unknown as SystemLayer
         break
       case 'skill':
-        ctx.skill = ctx.skill ? { ...ctx.skill, ...data } as SkillLayer : data as unknown as SkillLayer
+        ctx.skill = ctx.skill ? { ...ctx.skill, ...data } as ContextSkillLayer : data as unknown as ContextSkillLayer
         break
       case 'task':
         ctx.task = ctx.task ? { ...ctx.task, ...data } as TaskLayer : data as unknown as TaskLayer
