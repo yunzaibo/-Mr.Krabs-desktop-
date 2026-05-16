@@ -6,14 +6,14 @@
 
 **企业级安全的个人 AI Agent 一体化桌面客户端（项目仍在朝向Local-first AI-native Runtime Workspace迈进中）**
 
+（项目仍在朝向Local-first AI-native Runtime Workspace迈进中）
+一句人话：
 
-**一句人话：**
-
-**用户用自然语言启动任务，
+用户用自然语言启动任务，
 系统在本地 Runtime 中持续运行，
 上下文、资产、执行状态持续存在，
 Chat 只是入口，
-Workspace 才是真正的工作空间。**
+Workspace 才是真正的工作空间。
 
 [![CI](https://github.com/yunzaibo/-Mr.Krabs-desktop-/workflows/CI/badge.svg)](https://github.com/yunzaibo/-Mr.Krabs-desktop-/actions)
 [![Release](https://img.shields.io/github/v/release/yunzaibo/-Mr.Krabs-desktop-?include_prereleases)](https://github.com/yunzaibo/-Mr.Krabs-desktop-/releases)
