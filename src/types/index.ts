@@ -1,0 +1,78 @@
+/**
+ * HexClaw Desktop 类型定义统一入口
+ *
+ * 所有领域模型、API DTO、UI 类型从此处集中导出，
+ * 各模块统一从 @/types 导入，避免类型定义散落。
+ */
+
+// ─── 领域模型 ───────────────────────────────────────
+
+export type {
+  ChatMessage, ToolCall, ChatSession, ChatRequest, ChatAttachment, Artifact, ChatMode, ContentBlock,
+  InteractiveButton, InteractiveType, InteractiveOption, InteractiveApproval, CardField, InteractiveCard,
+  InteractiveResolved, InteractivePayload,
+} from './chat'
+export type { AgentRole, AgentConfig, AgentRule } from './agent'
+export type { LogEntry, LogQuery, LogStats } from './log'
+export type {
+  MemoryEntry,
+  MemoryType,
+  MemorySource,
+  MemoryStatus,
+  MemoryViewMode,
+  MemoryCapacity,
+  MemoryListResponse,
+} from './memory'
+export type { McpServer, McpTool } from './mcp'
+export type {
+  Skill, ClawHubSkill, SkillStatusUpdateResult,
+  SkillLayer, SkillCommand, SkillDependencies, SkillTrust,
+  SkillAction, SkillAgent, SkillHook, SkillExperimental,
+  SkillRuntimeCompat, SkillPackageMeta,
+} from './skill'
+export type { CronJob, CronJobInput, Task, TaskInput, TaskOutput, TaskResult, TaskStatus, TaskType, TaskMetadata, TaskError } from './task'
+export type {
+  SkillMeta, ContextLayerStatus, SystemLayer, SkillLayer, TaskLayer, ExecutionLayer, MemoryLayer,
+  RuntimeContext, ContextSummary,
+} from './context'
+export type { KnowledgeDoc, KnowledgeSearchResult } from './knowledge'
+export type {
+  CanvasNode,
+  CanvasEdge,
+  Workflow,
+  WorkflowRunStatus,
+  WorkflowNodeRun,
+  WorkflowRun,
+} from './canvas'
+export type {
+  AppConfig,
+  LLMConfig,
+  SecurityConfig,
+  SandboxConfig,
+  GeneralConfig,
+  NotificationConfig,
+  MCPConfig,
+  ProviderConfig,
+  ProviderType,
+  ProviderPreset,
+  ModelOption,
+  ModelCapability,
+  AgentMode,
+  ChatParams,
+  BackendLLMProvider,
+  BackendLLMConfig,
+  BackendRuntimeConfig,
+  RuntimeConfigUpdateRequest,
+  ConfigUpdateResponse,
+  LLMConnectionTestRequest,
+  LLMConnectionTestResponse,
+} from './settings'
+export type { SystemStats, PlatformInfo } from './system'
+
+// ─── UI 类型 ─────────────────────────────────────────
+
+export type { Toast } from './ui'
+
+// ─── 通用类型 ────────────────────────────────────────
+
+export type { ApiError, ApiErrorCode } from './error'

@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+src-tauri/target/
+src-tauri/binaries/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Homebrew Cask
+Casks/
+
+# Environment (本地覆盖文件，不提交)
+.env.local
+.env.*.local
+
+# Test
+coverage/
+tests/e2e/screenshots/
+test-results/
+playwright-report/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Cache
+.eslintcache
+
+# Claude Code
+.claude/
+
+# Internal workflow & planning (AI agent state, analysis notes, plans)
+.workflow/
+.spec-workflow/
+
+# Internal planning docs (不公开)
+docs/1.md
+docs/2.md
+docs/3.md
+docs/4.md
+docs/5.md
+docs/PROJECT_INDEX.md
+docs/system-prompt-contract.md
+docs/related-work.md
+docs/refactor/
+docs/agents-OS/
+docs/skill-archetypes/
+docs/system/
+docs/current/
+docs/adr/
+docs/claude-code-practices/
+
+# Runtime output (image generation cache)
+/output/

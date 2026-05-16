@@ -1,0 +1,159 @@
+/**
+ * API 客户端
+ *
+ * 统一管理所有 HTTP/SSE/WebSocket 请求。
+ * 内置请求拦截（日志 + 错误分类），环境配置驱动。
+ */
+
+import { ofetch } from 'ofetch'
+import { env } from '@/config/env'
+import { fromHttpStatus, fromNativeError, type ApiError } from '@/utils/errors'
+import { logger } from '@/utils/logger'
+
+// ─── HTTP 客户端 (ofetch) ────────────────────────────
+
+/** 创建预配置的 HTTP 客户端 */
+export const api = ofetch.create({
+  baseURL: env.apiBase,
+  timeout: env.timeout,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  onRequest({ request, options }) {
+    logger.debug(`→ ${(options.method ?? 'GET').toString().toUpperCase()} ${request.toString()}`)
+  },
+  onResponse({ request, response, options }) {
+    logger.debug(
+      `← ${response.status} ${(options.method ?? 'GET').toString().toUpperCase()} ${request.toString()}`,
+    )
+  },
+  onResponseError({ response }) {
+    const serverMsg = (response._data as Record<string, unknown> | undefined)?.error as string | undefined
+    const err = fromHttpStatus(response.status, serverMsg ?? response.statusText)
+    logger.error(`API error: [${err.code}] ${err.message}`)
+  },
+})
+
+// ─── 封装方法 ────────────────────────────────────────
+
+/** GET 请求 */
+export function apiGet<T>(url: string, query?: Record<string, unknown>) {
+  return api<T>(url, { method: 'GET', query })
+}
+
+/** POST 请求 */
+export function apiPost<T>(url: string, body?: Record<string, unknown> | FormData | object) {
+  const opts: Record<string, unknown> = { method: 'POST' }
+  if (body instanceof FormData) {
+    opts.body = body
+    opts.headers = {}
+  } else if (body) {
+    opts.body = body as Record<string, unknown>
+  }
+  return api<T>(url, opts)
+}
+
+/** PUT 请求 */
+export function apiPut<T>(url: string, body?: Record<string, unknown> | object) {
+  return api<T>(url, { method: 'PUT', body: body as Record<string, unknown> })
+}
+
+/** PATCH 请求 */
+export function apiPatch<T>(url: string, body?: Record<string, unknown> | object) {
+  return api<T>(url, { method: 'PATCH', body: body as Record<string, unknown> })
+}
+
+/** DELETE 请求 */
+export function apiDelete<T>(url: string) {
+  return api<T>(url, { method: 'DELETE' })
+}
+
+// ─── SSE 流式请求 ────────────────────────────────────
+
+/** SSE 流式请求 — 返回 ReadableStream<string> */
+export async function apiSSE(
+  url: string,
+  body?: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<ReadableStream<string>> {
+  logger.debug(`→ SSE POST ${url}`)
+
+  const response = await fetch(`${env.apiBase}${url}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: body ? JSON.stringify(body) : undefined,
+    signal,
+  })
+
+  if (!response.ok) {
+    const apiErr = fromHttpStatus(response.status)
+    throw new Error(apiErr.message)
+  }
+
+  if (!response.body) {
+    throw new Error('SSE response body is empty')
+  }
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let lineBuffer = ''
+
+  return new ReadableStream<string>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read()
+        if (done) {
+          controller.close()
+          return
+        }
+        lineBuffer += decoder.decode(value, { stream: true })
+        const lines = lineBuffer.split('\n')
+        lineBuffer = lines.pop() || '' // 最后一段可能是不完整行，保留到下次
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') {
+              controller.close()
+              return
+            }
+            controller.enqueue(data)
+          }
+        }
+      } catch (err) {
+        const apiErr = fromNativeError(err)
+        controller.error(apiErr)
+      }
+    },
+  })
+}
+
+// ─── WebSocket ───────────────────────────────────────
+
+/** WebSocket 连接 */
+export function apiWebSocket(path: string): WebSocket {
+  const url = `${env.wsBase}${path}`
+  logger.debug(`→ WS ${url}`)
+  return new WebSocket(url)
+}
+
+// ─── 健康检查 ────────────────────────────────────────
+
+/** 健康检查（通过 Tauri command 绕过 CORS，回退到 HTTP） */
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const result = await invoke<boolean>('check_engine_health')
+    return Boolean(result)
+  } catch {
+    try {
+      await api('/health', { timeout: 3000 })
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+
+// ─── 重新导出错误工具 (方便外部使用) ─────────────────
+
+export type { ApiError }
+export { fromNativeError, createApiError, isRetryable, getErrorMessage } from '@/utils/errors'

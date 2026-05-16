@@ -1,0 +1,194 @@
+name: Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to package (branch, tag, or commit SHA)
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ inputs.ref || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Lint, Type Check & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type Check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm test:unit
+
+  build:
+    name: Package (${{ matrix.target }})
+    needs: checks
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            go_os: darwin
+            go_arch: arm64
+            sidecar_name: hexclaw-aarch64-apple-darwin
+            tauri_args: --target aarch64-apple-darwin
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            go_os: darwin
+            go_arch: amd64
+            sidecar_name: hexclaw-x86_64-apple-darwin
+            tauri_args: --target x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            go_os: linux
+            go_arch: amd64
+            sidecar_name: hexclaw-x86_64-unknown-linux-gnu
+            tauri_args: ''
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            go_os: windows
+            go_arch: amd64
+            sidecar_name: hexclaw-x86_64-pc-windows-msvc.exe
+            tauri_args: --target x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve hexclaw backend ref
+        id: sidecar_ref
+        run: |
+          REF=$(grep '^HEXCLAW_REF' Makefile | head -1 | sed 's/.*?= *//')
+          echo "ref=${REF}" >> "$GITHUB_OUTPUT"
+          echo "Resolved HEXCLAW_REF=${REF}"
+
+      - name: Checkout hexclaw backend
+        uses: actions/checkout@v4
+        with:
+          repository: hexagon-codes/hexclaw
+          ref: ${{ steps.sidecar_ref.outputs.ref }}
+          path: hexclaw
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: hexclaw/go.sum
+
+      - name: Configure private modules
+        run: |
+          if [ -n "${{ secrets.PRIVATE_REPO_TOKEN }}" ]; then
+            git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          fi
+
+      - name: Build hexclaw sidecar
+        env:
+          GOOS: ${{ matrix.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
+          CGO_ENABLED: '0'
+          GOPRIVATE: github.com/hexagon-codes/*
+        run: |
+          mkdir -p src-tauri/binaries
+          cd hexclaw
+          VERSION="$(git describe --tags --always --dirty 2>/dev/null)"
+          COMMIT="$(git rev-parse --short HEAD)"
+          DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
+            -o ../src-tauri/binaries/${{ matrix.sidecar_name }} ./cmd/hexclaw
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Disable updater artifacts when signing key is unavailable
+        run: |
+          node -e "const fs=require('fs'); const path='src-tauri/tauri.conf.json'; const cfg=JSON.parse(fs.readFileSync(path,'utf8')); if (!process.env.TAURI_SIGNING_PRIVATE_KEY) { cfg.bundle = { ...(cfg.bundle || {}), createUpdaterArtifacts: false }; fs.writeFileSync(path, JSON.stringify(cfg, null, 2) + '\n'); console.log('Disabled updater artifacts for unsigned package build.'); } else { console.log('Keeping updater artifacts enabled.'); }"
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
+      - name: Resolve Tauri bundle args
+        id: tauri_args
+        shell: bash
+        run: |
+          args="${{ matrix.tauri_args }}"
+          version="$(node -p "require('./package.json').version")"
+          prerelease=false
+          if [[ "$version" == *-* ]]; then
+            prerelease=true
+          fi
+          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-msvc" && "$prerelease" == "true" ]]; then
+            args="$args --bundles nsis"
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+
+      - name: Build Tauri packages
+        uses: tauri-apps/tauri-action@action-v0.6.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: ${{ steps.tauri_args.outputs.args }}
+          retryAttempts: 2
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hexclaw-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            ${{ startsWith(matrix.target, 'aarch64-apple-darwin') && 'src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg' || '' }}
+            ${{ startsWith(matrix.target, 'x86_64-apple-darwin') && 'src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg' || '' }}
+            ${{ matrix.target == 'x86_64-unknown-linux-gnu' && 'src-tauri/target/release/bundle/appimage/*.AppImage' || '' }}
+            ${{ matrix.target == 'x86_64-unknown-linux-gnu' && 'src-tauri/target/release/bundle/deb/*.deb' || '' }}
+            ${{ matrix.target == 'x86_64-pc-windows-msvc' && 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe' || '' }}
+            ${{ matrix.target == 'x86_64-pc-windows-msvc' && steps.tauri_args.outputs.prerelease != 'true' && 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi' || '' }}
