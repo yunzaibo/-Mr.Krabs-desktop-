@@ -30,7 +30,7 @@ const agentSegments = computed(() => [
   { key: 'roles', label: t('agents.roles', 'Templates') },
   { key: 'agents', label: t('agents.registeredAgents', 'Running') },
   { key: 'rules', label: t('agents.rulesDesc', 'Rules') },
-  { key: 'conference', label: t('agents.conferenceTab') },
+  { key: 'conference', label: `${t('agents.conferenceTab')} (Experimental)` },
 ])
 
 // Role detail expansion

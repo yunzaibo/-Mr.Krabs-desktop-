@@ -27,6 +27,8 @@ import ResearchProgress from '@/components/chat/ResearchProgress.vue'
 import AgentBadge from '@/components/chat/AgentBadge.vue'
 import TaskBadge from '@/components/chat/TaskBadge.vue'
 import SkillResultCard from '@/components/chat/SkillResultCard.vue'
+import TaskCard from '@/components/chat/TaskCard.vue'
+import type { TaskCardMetadata } from '@/types/taskCard'
 import ToolApprovalCard from '@/components/chat/ToolApprovalCard.vue'
 import InteractiveBlock from '@/components/chat/InteractiveBlock.vue'
 import ArtifactsPanel from '@/components/artifacts/ArtifactsPanel.vue'
@@ -1392,9 +1394,15 @@ function startSidebarResize(event: MouseEvent) {
                       <div class="hc-thinking__content">{{ normalizeAssistantReasoning(msg.reasoning) }}</div>
                     </details>
                   </div>
+                  <!-- Task Card (task execution visualization) -->
+                  <TaskCard
+                    v-if="(msg.metadata as unknown as TaskCardMetadata)?.kind === 'task-card'"
+                    v-bind="(msg.metadata as unknown as TaskCardMetadata)"
+                    :content="msg.content"
+                  />
                   <!-- Skill 结果卡片（替代普通气泡） -->
                   <SkillResultCard
-                    v-if="msg.metadata?.skillId"
+                    v-else-if="msg.metadata?.skillId"
                     :skill-id="msg.metadata.skillId as string"
                     :skill-name="(msg.metadata.skillName as string) || 'Skill'"
                     :status="msg.metadata.runtimeStatus as string"

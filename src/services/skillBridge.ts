@@ -18,9 +18,11 @@ import { SkillLoader } from './skillLoader'
 import { executeChatTask, registerChatTask } from './runtimeBridge'
 import { buildAssistantMessage } from '@/utils/buildAssistantMessage'
 import { getRuntimeServices } from './runtime/runtimeServices'
+import { useChatStore } from '@/stores/chat'
 import { useRuntimeStore } from '@/stores/runtime'
 import { useTaskStore } from '@/stores/tasks'
 import { DEFAULT_ALLOWED_CAPABILITIES } from '@/types/capability'
+import type { TaskCardMetadata } from '@/types/taskCard'
 import { BaseDirectory, resourceDir } from '@tauri-apps/api/path'
 import { readTextFile } from '@tauri-apps/plugin-fs'
 import { getCommandRegistry } from './commandRegistry'
@@ -31,6 +33,7 @@ import { getHookRegistry, type HookDefinition, type HookEvent } from './hookRegi
 import { executeHooksForEvent } from './hookExecutor'
 import { buildSkillMeta } from '@/utils/skillMeta'
 import { getTopMatch } from './intentMatcher'
+import { inferResultKind } from '@/types/resultSurface'
 
 // ── Types ────────────────────────────────────────
 
@@ -417,8 +420,13 @@ async function handleSkillInvocation(
     throw new Error(`Skill "${skillMeta.displayName}" 缺少所需权限`)
   }
 
+  let taskId: string | null = null
+  let placeholderId: string | null = null
+  let taskCreatedAt = 0
+
   try {
-    const taskId = params.createId()
+    taskId = params.createId()
+    placeholderId = params.createId()
 
     const task: Task = {
       id: taskId,
@@ -429,6 +437,25 @@ async function handleSkillInvocation(
     const taskStore = useTaskStore()
     taskStore.enqueue(task)
     registerChatTask(task)
+
+    const placeholderMetadata: TaskCardMetadata = {
+      kind: 'task-card',
+      taskId,
+      skillId: skillMeta.skillId,
+      skillName: skillMeta.displayName,
+      status: 'running',
+      elapsed: 0,
+      lastEvent: '任务已入队',
+      previewEvents: ['任务已入队'],
+    }
+    const placeholderMsg: ChatMessage = {
+      id: placeholderId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      metadata: placeholderMetadata as unknown as Record<string, unknown>,
+    }
+    params.messages.value.push(placeholderMsg)
 
     // 加载 SKILL.md → 注入 SkillLayer
     const runtime = useRuntimeStore()
@@ -470,24 +497,64 @@ async function handleSkillInvocation(
     fireHooks('on-load', skillMeta.skillId, { TASK_ID: taskId })
     fireHooks('on-execute', skillMeta.skillId, { TASK_ID: taskId })
 
-    const taskCreatedAt = Date.now()
+    taskCreatedAt = Date.now()
     const result = await executeChatTask(taskId)
+
+    const elapsed = Date.now() - taskCreatedAt
     const assistantMsg = buildAssistantMessage(result.content, {
-      id: params.createId(),
-      metadata: {
+      id: placeholderId,
+      metadata: ({
+        kind: 'task-card',
         taskId,
         skillId: skillMeta.skillId,
         skillName: skillMeta.displayName,
-        runtimeStatus: 'completed',
-        elapsed: Date.now() - taskCreatedAt,
-      },
+        status: 'completed',
+        elapsed,
+        resultKind: inferResultKind(skillMeta.skillId),
+        resultPreview: result.content?.substring(0, 200),
+        lastEvent: '完成',
+        previewEvents: [`完成 · ${(elapsed / 1000).toFixed(1)}s`],
+      } satisfies TaskCardMetadata) as unknown as Record<string, unknown>,
     })
-    params.messages.value.push(assistantMsg)
-    return assistantMsg
+
+    const chatStore = useChatStore()
+    const updated = await chatStore.updateMessage(placeholderId, (current) => ({
+      ...current,
+      content: assistantMsg.content,
+      reasoning: assistantMsg.reasoning,
+      tool_calls: assistantMsg.tool_calls,
+      agent_name: assistantMsg.agent_name,
+      metadata: assistantMsg.metadata,
+    }))
+
+    return updated ?? assistantMsg
   } catch (e) {
     fireHooks('on-error', skillMeta.skillId, {
       ERROR: e instanceof Error ? e.message : String(e),
     })
+
+    try {
+      if (!taskId || !placeholderId) throw new Error('missing placeholder context')
+      const finalTaskId = taskId
+      const chatStore = useChatStore()
+      await chatStore.updateMessage(placeholderId, (current) => ({
+        ...current,
+        metadata: ({
+          kind: 'task-card',
+          taskId: finalTaskId,
+          skillId: skillMeta.skillId,
+          skillName: skillMeta.displayName,
+          status: 'failed',
+          elapsed: taskCreatedAt ? Date.now() - taskCreatedAt : undefined,
+          resultKind: inferResultKind(skillMeta.skillId),
+          lastEvent: '失败',
+          previewEvents: ['执行失败'],
+        } satisfies TaskCardMetadata) as unknown as Record<string, unknown>,
+      }))
+    } catch {
+      // ignore placeholder update failure
+    }
+
     params.handleSendError(e, null, params.sending, params.draftSending)
     return null
   }

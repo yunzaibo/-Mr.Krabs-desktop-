@@ -165,6 +165,20 @@ function getGroupLabel(group: string): string {
           :value="`${projection.task.progress}%`"
         />
         <KeyValueRow
+          v-if="projection.task.skillName"
+          :label="t('workspace.field.skillName')"
+          :value="projection.task.skillName"
+        />
+        <KeyValueRow
+          v-if="resultProjection?.duration"
+          :label="t('workspace.field.elapsed')"
+          :value="resultProjection.duration"
+        />
+        <KeyValueRow
+          :label="t('workspace.field.taskId')"
+          :value="projection.taskId"
+        />
+        <KeyValueRow
           v-if="projection.task.inputSummary"
           :label="t('workspace.field.input')"
           :value="projection.task.inputSummary"
@@ -259,6 +273,17 @@ function getGroupLabel(group: string): string {
           <div v-if="execOutputExpanded" class="context-detail__exec-content">
             <MarkdownRenderer :content="projection.execution.outputContent" />
           </div>
+        </div>
+      </ContextCard>
+
+      <!-- Primary Result section — 主要文本结果 -->
+      <ContextCard
+        v-if="resultProjection?.primaryContent"
+        :eyebrow="t('workspace.sections.result')"
+        :title="t('workspace.result.primaryTitle')"
+      >
+        <div class="context-detail__primary-result">
+          <MarkdownRenderer :content="resultProjection.primaryContent" />
         </div>
       </ContextCard>
 
@@ -492,6 +517,15 @@ function getGroupLabel(group: string): string {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* ── Primary Result ────────────────────────────── */
+
+.context-detail__primary-result {
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .result-item {

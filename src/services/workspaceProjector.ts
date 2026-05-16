@@ -50,6 +50,18 @@ function formatElapsed(iso?: string): string {
   return `${Math.floor(ms / 3600000)}h`
 }
 
+function computeDuration(task: Task): string | undefined {
+  const start = task.metadata?.startedAt
+  const end = task.metadata?.completedAt
+  if (!start || !end) return undefined
+  const ms = new Date(end).getTime() - new Date(start).getTime()
+  if (ms < 0) return undefined
+  if (ms < 1000) return '<1s'
+  if (ms < 60000) return `${Math.floor(ms / 1000)}s`
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`
+  return `${Math.floor(ms / 3600000)}h`
+}
+
 function formatTime(iso: string): string {
   try {
     const d = new Date(iso)
@@ -130,6 +142,7 @@ function projectTaskSection(ctx: RuntimeContext): WorkspaceContextProjection['ta
     goal: t?.goal,
     status: t?.status ?? 'pending',
     progress: t?.progress,
+    skillName: ctx.skill?.skillName,
     inputSummary: t?.input?.payload
       ? truncate(JSON.stringify(t.input.payload), 100)
       : undefined,
@@ -568,6 +581,8 @@ export function projectTaskResult(
     items,
     totalItems: items.length,
     hasError: items.some(i => i.status === 'invalid'),
+    duration: computeDuration(task),
+    primaryContent: ctx?.execution?.output?.content ?? task.output?.result?.content,
     navigation: task.sessionId ? { chatSessionId: task.sessionId } : undefined,
   }
 }

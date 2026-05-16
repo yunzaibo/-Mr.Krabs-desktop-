@@ -35,6 +35,14 @@ macOS / Windows / Linux 原生运行 · Sidecar 架构本地部署 · 零云端�
 
 ---
 
+项目仍在朝向**Local-first AI-native Runtime Workspace**迈进中
+
+ 人话：
+
+用户用自然语言启动任务， 系统在本地 Runtime 中持续运行， 上下文、资产、执行状态持续存在， Chat 只是入口， Workspace 才是真正的工作空间。
+
+
+
 ## 功能特性
 
 | 功能 | 说明 |

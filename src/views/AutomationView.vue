@@ -42,7 +42,7 @@ const pathMap: Record<'tasks' | 'canvas' | 'webhooks', string> = {
 const segments = computed(() =>
   getNavigationChildren('automation').map((tab) => ({
     key: tabKeyMap[tab.id] ?? 'tasks',
-    label: t(tab.i18nKey),
+    label: tab.experimental ? `${t(tab.i18nKey)} (Experimental)` : t(tab.i18nKey),
   })),
 )
 

@@ -28,6 +28,7 @@ export interface NavChild {
   id: string
   path: string           // full route path (for redirect)
   i18nKey: string
+  experimental?: boolean // mark as experimental feature
 }
 
 export type NavGroup = 'core' | 'integration' | 'system'
@@ -118,7 +119,7 @@ export const navigationItems: NavItem[] = [
     group: 'core',
     children: [
       { id: 'automation-tasks', path: '/automation', i18nKey: 'nav.automationTasks' },
-      { id: 'automation-canvas', path: '/automation/canvas', i18nKey: 'nav.automationCanvas' },
+      { id: 'automation-canvas', path: '/automation/canvas', i18nKey: 'nav.automationCanvas', experimental: true },
     ],
   },
 

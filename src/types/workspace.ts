@@ -45,6 +45,7 @@ export interface WorkspaceContextProjection {
     goal?: string
     status: string
     progress?: number
+    skillName?: string         // 技能名称（来自 SkillLayer.skillName）
     inputSummary?: string     // ≤100 chars
     outputSummary?: string    // ≤100 chars
     errorCode?: string
@@ -212,6 +213,10 @@ export interface TaskResultProjection {
   items: ResultItemProjection[]
   totalItems: number
   hasError: boolean
+  /** 任务执行耗时（e.g. "12s" / "3m"） */
+  duration?: string
+  /** 主要结果文本内容（TaskOutput.result.content） */
+  primaryContent?: string
   /** Navigation metadata */
   navigation?: {
     chatSessionId?: string

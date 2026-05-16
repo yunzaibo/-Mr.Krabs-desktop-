@@ -26,6 +26,12 @@ Native on macOS / Windows / Linux · Sidecar architecture · Zero cloud dependen
 
 ---
 
+The project is evolving toward a **Local-first AI-native Runtime Workspace**.
+
+In plain terms:
+
+Users start tasks with natural language. The system runs persistently in a local Runtime — context, assets, and execution state survive across sessions. Chat is just the entry point; Workspace is where real work happens.
+
 ## Features
 
 | Feature | Description |
