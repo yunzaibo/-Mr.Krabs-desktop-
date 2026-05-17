@@ -294,4 +294,12 @@ function openWorkspace() {
   border-color: var(--hc-accent);
   color: var(--hc-accent);
 }
+.task-card--completed .task-card__workspace-btn {
+  background: var(--hc-accent);
+  color: white;
+  border-color: var(--hc-accent);
+}
+.task-card--completed .task-card__workspace-btn:hover {
+  background: color-mix(in srgb, var(--hc-accent) 85%, black);
+}
 </style>

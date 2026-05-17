@@ -67,6 +67,11 @@ const streamingReasoningDisplay = computed(() =>
   normalizeAssistantReasoning(chatStore.isCurrentStreamingReasoning, { trim: false }),
 )
 
+function isTaskCardMessage(msg: ChatMessage): boolean {
+  const meta = msg.metadata as Record<string, unknown> | undefined
+  return meta?.kind === 'task-card'
+}
+
 const messagesEndRef = ref<HTMLDivElement>()
 const messagesContainerRef = ref<HTMLDivElement>()
 const thinkingContentRef = ref<HTMLDivElement>()
@@ -1366,19 +1371,19 @@ function startSidebarResize(event: MouseEvent) {
               :id="`msg-${msg.id}`"
               :key="msg.id"
               class="hc-msg"
-              :class="msg.role === 'user' ? 'hc-msg--user' : 'hc-msg--assistant'"
+              :class="[msg.role === 'user' ? 'hc-msg--user' : 'hc-msg--assistant', isTaskCardMessage(msg) ? 'hc-msg--task' : '']"
               @mouseenter="setHoveredMsg(msg.id)"
               @mouseleave="delayedClearHover()"
               @contextmenu="handleMsgContextMenu($event, idx, msg.role as 'user' | 'assistant')"
             >
               <!-- Assistant message (Feishu style: avatar left + bubble) -->
               <template v-if="msg.role === 'assistant'">
-                <div class="hc-msg__avatar">
+                <div v-if="!isTaskCardMessage(msg)" class="hc-msg__avatar">
                   <img :src="crabLogo" alt="HC" class="hc-msg__avatar-img" />
                   <span class="hc-msg__avatar-badge" />
                 </div>
-                <div class="hc-msg__body">
-                  <div class="hc-msg__name">{{ msg.agent_name || t('chat.botName') }}</div>
+                <div class="hc-msg__body" :class="{ 'hc-msg__body--task': isTaskCardMessage(msg) }">
+                  <div v-if="!isTaskCardMessage(msg)" class="hc-msg__name">{{ msg.agent_name || t('chat.botName') }}</div>
                   <AgentBadge
                     v-if="msg.agent_name || (msg.metadata?.agent_name as string)"
                     :agent-name="msg.agent_name || (msg.metadata?.agent_name as string) || ''"
@@ -1738,12 +1743,9 @@ function startSidebarResize(event: MouseEvent) {
                 <div v-if="chatStore.isCurrentStreamingContent" class="hc-msg__bubble hc-msg__bubble--assistant">
                   <MarkdownRenderer :content="chatStore.isCurrentStreamingContent" />
                 </div>
-                <div v-else-if="!streamingReasoningDisplay" class="hc-msg__bubble hc-msg__bubble--assistant">
-                  <span class="hc-typing-dots">
-                    <span class="hc-typing-dots__dot" />
-                    <span class="hc-typing-dots__dot" />
-                    <span class="hc-typing-dots__dot" />
-                  </span>
+                <div v-else-if="!streamingReasoningDisplay" class="hc-runtime-active">
+                  <span class="hc-runtime-active__spinner" />
+                  <span class="hc-runtime-active__label">{{ t('chat.runtimeActive') }}</span>
                 </div>
               </div>
             </div>
@@ -2204,6 +2206,15 @@ function startSidebarResize(event: MouseEvent) {
 
 .hc-msg--assistant {
   justify-content: flex-start;
+}
+
+.hc-msg--task {
+  padding-left: 0;
+  margin: 12px 0;
+}
+
+.hc-msg--task .hc-msg__body--task {
+  max-width: 100%;
 }
 
 /* ─── Avatar ───── */

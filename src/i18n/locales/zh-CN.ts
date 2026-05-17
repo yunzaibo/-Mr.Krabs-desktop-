@@ -176,6 +176,7 @@ export default {
     receivedReply: '收到回复',
     noModels: '未配置模型',
     typing: 'Runtime 运行中...',
+    runtimeActive: '正在执行...',
     botName: '小蟹',
     thinking: '正在思考...',
     thoughtProcess: '推理过程',

@@ -183,6 +183,7 @@ export default {
     receivedReply: 'جاۋاب تاپشۇرۇپ ئېلىندى',
     noModels: 'مودېل تەڭشەلمىگەن',
     typing: 'يېزىۋاتىدۇ...',
+    runtimeActive: ' ئىجرا قىلىۋاتىدۇ...',
     botName: 'كىچىك چاغان',
     thinking: 'ئويلاۋاتىدۇ...',
     thoughtProcess: 'مۇلاھىزە جەريانى',

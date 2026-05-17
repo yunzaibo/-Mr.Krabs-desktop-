@@ -170,6 +170,7 @@ export default {
     receivedReply: 'Reply received',
     noModels: 'No models configured',
     typing: 'Runtime Active...',
+    runtimeActive: 'Runtime Active...',
     botName: 'Mr.Krabs',
     thinking: 'Thinking...',
     thoughtProcess: 'Reasoning process',
