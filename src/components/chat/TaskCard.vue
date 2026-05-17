@@ -11,6 +11,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { TaskCardMetadata } from '@/types/taskCard'
 import type { ResultSurfaceKind } from '@/types/resultSurface'
+import MarkdownRenderer from './MarkdownRenderer.vue'
 import SummaryResultCard from './SummaryResultCard.vue'
 import BulletResultCard from './BulletResultCard.vue'
 
@@ -71,20 +72,30 @@ const visibleEvents = computed(() => {
   return (props.previewEvents ?? []).slice(0, 3)
 })
 
+function formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${seconds.toFixed(1)}s`
+  const m = Math.floor(seconds / 60)
+  const s = Math.round(seconds % 60)
+  if (m < 60) return s > 0 ? `${m}m ${s}s` : `${m}m`
+  const h = Math.floor(m / 60)
+  const rm = m % 60
+  return rm > 0 ? `${h}h ${rm}m` : `${h}h`
+}
+
 const statusLabel = computed(() => {
   switch (props.status) {
-    case 'running': return t('taskCard.statusRunning')
-    case 'completed': return t('taskCard.statusCompleted')
-    case 'failed': return t('taskCard.statusFailed')
-    case 'cancelled': return t('taskCard.statusCancelled')
+    case 'running': return t('chat.taskCard.statusRunning')
+    case 'completed': return t('chat.taskCard.statusCompleted')
+    case 'failed': return t('chat.taskCard.statusFailed')
+    case 'cancelled': return t('chat.taskCard.statusCancelled')
     default: return props.status
   }
 })
 
 const subtitle = computed(() => {
   switch (props.status) {
-    case 'running': return `${t('taskCard.running')} ${props.skillName}...`
-    case 'completed': return `${t('taskCard.completed')} \u00B7 ${displayElapsed.value.toFixed(1)}s`
+    case 'running': return `${t('chat.taskCard.running')} ${props.skillName}...`
+    case 'completed': return `${t('chat.taskCard.completed')} \u00B7 ${formatElapsed(displayElapsed.value)}`
     default: return ''
   }
 })
@@ -122,7 +133,7 @@ function openWorkspace() {
         <BulletResultCard :content="content || ''" />
       </template>
       <div v-else-if="truncatedPreview" class="task-card__preview">
-        {{ truncatedPreview }}
+        <MarkdownRenderer :content="truncatedPreview" />
       </div>
 
       <!-- Bottom: previewEvents + Open Workspace -->
@@ -133,7 +144,7 @@ function openWorkspace() {
           </div>
         </div>
         <button class="task-card__workspace-btn" @click.stop="openWorkspace">
-          {{ t('taskCard.openWorkspace') }}
+          {{ t('chat.taskCard.openWorkspace') }}
         </button>
       </div>
     </div>
