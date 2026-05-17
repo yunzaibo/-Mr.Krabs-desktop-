@@ -6,7 +6,7 @@
  * 保留 raw events 视图作为 toggle 备选。
  * 消费 Projection DTO，不 import RuntimeEvent。
  */
-import { ref } from 'vue'
+import { ref, computed, watch, onUnmounted, onUpdated, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TimelineItemProjection, TimelineNarrativeGroup, NarrativePhase } from '@/types/workspace'
 import TimelineItem from '@/components/inspector/TimelineItem.vue'
@@ -17,6 +17,7 @@ const _props = defineProps<{
   items: TimelineItemProjection[]
   narrativeItems: TimelineNarrativeGroup[]
   taskId: string | null
+  taskStatus?: string  // 'running' | 'pending' | 'completed' | 'failed' | 'cancelled'
 }>()
 
 // ── 视图模式 ──────────────────────────────────────
@@ -60,6 +61,103 @@ function formatDuration(ms: number): string {
   if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`
   return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`
 }
+
+// ── Running detection ────────────────────────────
+
+const isTaskRunning = computed(() => {
+  // Primary: task status
+  if (_props.taskStatus === 'running' || _props.taskStatus === 'pending') return true
+  // Fallback: phase detection
+  if (_props.narrativeItems.length === 0) return false
+  const lastGroup = _props.narrativeItems[_props.narrativeItems.length - 1]!
+  return lastGroup.phase !== 'completion' && lastGroup.phase !== 'failure'
+})
+
+// ── Running duration (setInterval 1s) ────────────
+
+let intervalId: ReturnType<typeof setInterval> | null = null
+const runningElapsed = ref('')
+
+function updateRunningDuration() {
+  if (!isTaskRunning.value) {
+    runningElapsed.value = ''
+    return
+  }
+  const lastGroup = _props.narrativeItems[_props.narrativeItems.length - 1]
+  if (lastGroup) {
+    const startMs = new Date(lastGroup.startTime).getTime()
+    runningElapsed.value = formatDuration(Date.now() - startMs)
+  }
+}
+
+function startRunningTimer() {
+  stopRunningTimer()
+  updateRunningDuration()
+  intervalId = setInterval(updateRunningDuration, 1000)
+}
+
+function stopRunningTimer() {
+  if (intervalId) {
+    clearInterval(intervalId)
+    intervalId = null
+  }
+  runningElapsed.value = ''
+}
+
+watch(isTaskRunning, (running) => {
+  if (running) startRunningTimer()
+  else stopRunningTimer()
+}, { immediate: true })
+
+onUnmounted(() => {
+  stopRunningTimer()
+})
+
+// ── Auto-scroll ──────────────────────────────────
+
+const narrativeContainer = ref<HTMLElement | null>(null)
+const isNearBottom = ref(true)
+
+function checkScrollPosition() {
+  const el = narrativeContainer.value
+  if (!el) return
+  isNearBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 50
+}
+
+function scrollToLatest() {
+  if (!isNearBottom.value) return
+  nextTick(() => {
+    const el = narrativeContainer.value
+    if (!el) return
+    const lastGroup = el.querySelector('.narrative-group:last-child')
+    lastGroup?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  })
+}
+
+watch(() => _props.narrativeItems.length, () => {
+  scrollToLatest()
+})
+
+// ── Entrance animation ───────────────────────────
+
+const prevGroupCount = ref(0)
+
+onUpdated(() => {
+  const currentCount = _props.narrativeItems.length
+  if (currentCount > prevGroupCount.value) {
+    nextTick(() => {
+      const el = narrativeContainer.value
+      if (!el) return
+      const groups = el.querySelectorAll('.narrative-group')
+      const lastGroup = groups[groups.length - 1]
+      if (lastGroup) {
+        lastGroup.classList.add('narrative-group--entering')
+        setTimeout(() => lastGroup.classList.remove('narrative-group--entering'), 300)
+      }
+    })
+  }
+  prevGroupCount.value = currentCount
+})
 </script>
 
 <template>
@@ -106,12 +204,20 @@ function formatDuration(ms: number): string {
     </div>
 
     <!-- Narrative view -->
-    <div v-else-if="viewMode === 'narrative'" class="timeline-panel__narrative">
+    <div
+      v-else-if="viewMode === 'narrative'"
+      ref="narrativeContainer"
+      class="timeline-panel__narrative"
+      @scroll="checkScrollPosition"
+    >
       <div
-        v-for="group in narrativeItems"
+        v-for="(group, idx) in narrativeItems"
         :key="group.id"
         class="narrative-group"
-        :class="{ 'narrative-group--collapsed': group.isCollapsed && !isExpanded(group.id) }"
+        :class="{
+          'narrative-group--collapsed': group.isCollapsed && !isExpanded(group.id),
+          'narrative-group--pulse': isTaskRunning && idx === narrativeItems.length - 1
+        }"
       >
         <!-- Group header -->
         <div class="narrative-group__header">
@@ -124,7 +230,13 @@ function formatDuration(ms: number): string {
             <div class="narrative-group__title-row">
               <span class="narrative-group__title">{{ t(group.title) }}</span>
               <span
-                v-if="group.durationMs !== undefined"
+                v-if="isTaskRunning && idx === narrativeItems.length - 1"
+                class="narrative-group__duration"
+              >
+                {{ runningElapsed }}
+              </span>
+              <span
+                v-else-if="group.durationMs !== undefined"
                 class="narrative-group__duration"
               >
                 {{ formatDuration(group.durationMs) }}
@@ -379,5 +491,27 @@ function formatDuration(ms: number): string {
   padding: 1px 6px;
   border-radius: 100px;
   margin-top: 1px;
+}
+
+/* ── Pulse animation for running tasks ─────────── */
+
+.narrative-group--pulse .narrative-group__dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+/* ── Entrance animation for new groups ─────────── */
+
+.narrative-group--entering {
+  animation: narrative-enter 0.3s ease-out;
+}
+
+@keyframes narrative-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

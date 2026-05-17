@@ -1665,6 +1665,7 @@ export default {
       filterOutput: '产物',
       empty: '暂无事件',
       emptyHint: '选择一个 Task 查看 Timeline',
+      running: '已运行',
       taskCreated: '任务创建',
       taskCompleted: '任务完成',
       taskFailed: '任务失败',

@@ -1644,6 +1644,7 @@ export default {
       filterOutput: 'مەھسۇلات',
       empty: 'ۋەقە يوق',
       emptyHint: 'ۋاقىت سىزىقىنى كۆرۈش ئۈچۈن ۋەزىپە تاللاڭ',
+      running: 'ئىجرا بولىۋاتىدۇ',
       taskCreated: 'ۋەزىپە قۇرۇلدى',
       taskCompleted: 'ۋەزىپە تاماملاندى',
       taskFailed: 'ۋەزىپە مەغلۇپ بولدى',

@@ -69,6 +69,7 @@ const {
           :items="selectedTimelineProjection"
           :narrative-items="selectedNarrativeProjection"
           :task-id="selectedTaskId"
+          :task-status="selectedContextProjection?.task?.status"
         />
       </aside>
     </div>

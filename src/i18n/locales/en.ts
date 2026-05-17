@@ -1661,6 +1661,7 @@ export default {
       filterOutput: 'Output',
       empty: 'No events',
       emptyHint: 'Select a Task to view Timeline',
+      running: 'Running',
       taskCreated: 'Task created',
       taskCompleted: 'Task completed',
       taskFailed: 'Task failed',
