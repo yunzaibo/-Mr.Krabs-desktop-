@@ -1580,6 +1580,14 @@ export default {
     noSelection: 'تەپسىلاتنى كۆرۈش ئۈچۈن ۋەزىپە تاللاڭ',
     taskEnded: 'بۇ ۋەزىپە ئاخىرلاشتى',
     goToChat: 'سۆھبەتكە قايتىش',
+    actionBar: {
+      modifyInstruction: 'بۇيرۇقنى ئۆزگەرتىش',
+      copyResult: 'نەتىجىنى كۆچۈرۈش',
+      backToChat: 'سۆھبەتكە قايتىش',
+      copied: 'كۆچۈرۈلدى',
+      noResult: 'كۆچۈرۈدىغان نەتىجە يوق',
+      noSession: 'ئۇلىنىشلىك سۆھبەت يوق',
+    },
     sections: {
       task: 'ۋەزىپە',
       skill: 'ماھارەت',

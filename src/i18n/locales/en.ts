@@ -1596,6 +1596,14 @@ export default {
     noSelection: 'Select a Task to view details',
     taskEnded: 'This task has ended',
     goToChat: 'Open Workspace',
+    actionBar: {
+      modifyInstruction: 'Modify Instruction',
+      copyResult: 'Copy Result',
+      backToChat: 'Back to Chat',
+      copied: 'Copied',
+      noResult: 'No result to copy',
+      noSession: 'No linked session',
+    },
     sections: {
       task: 'Task',
       skill: 'Skill',

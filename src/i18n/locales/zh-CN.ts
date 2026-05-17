@@ -1600,6 +1600,14 @@ export default {
     noSelection: '选择一个 Task 查看详情',
     taskEnded: '该任务已结束',
     goToChat: '打开工作台',
+    actionBar: {
+      modifyInstruction: '修改指令',
+      copyResult: '复制结果',
+      backToChat: '返回对话',
+      copied: '已复制',
+      noResult: '暂无结果可复制',
+      noSession: '无关联对话',
+    },
     sections: {
       task: '任务',
       skill: '技能',

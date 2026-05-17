@@ -19,6 +19,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { MessageCircle, Copy, FileText, Image, File, Code, Wrench } from 'lucide-vue-next'
 import type { WorkspaceContextProjection, TaskResultProjection, ResultItemProjection } from '@/types/workspace'
+import TaskActionBar from '@/components/workspace/TaskActionBar.vue'
 import ContextCard from '@/components/inspector/ContextCard.vue'
 import KeyValueRow from '@/components/inspector/KeyValueRow.vue'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
@@ -100,6 +101,14 @@ function navigateToChat(sessionId: string) {
   router.push({ path: '/chat', query: { sessionId } })
 }
 
+function handleModifyInstruction() {
+  // P1: 导航回 Chat session，让用户重新提交指令
+  // Phase 3 将实现真正的 re-run（通过 Runtime 状态机）
+  if (props.projection?.task.navigation?.chatSessionId) {
+    navigateToChat(props.projection.task.navigation.chatSessionId)
+  }
+}
+
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`
@@ -145,6 +154,14 @@ function getGroupLabel(group: string): string {
     </div>
 
     <template v-else>
+      <!-- Action Bar -->
+      <TaskActionBar
+        :chat-session-id="projection.task.navigation?.chatSessionId ?? null"
+        :primary-content="resultProjection?.primaryContent ?? null"
+        :has-result="!!resultProjection"
+        @modify-instruction="handleModifyInstruction"
+      />
+
       <!-- Task section -->
       <ContextCard :eyebrow="t('workspace.sections.task')" :title="projection.task.goal || projection.taskId.slice(0, 8)">
         <button
