@@ -7,6 +7,7 @@
 //   tray      — 系统托盘
 //   window    — 窗口管理 + 全局快捷键
 
+pub mod browser_runtime;
 pub mod commands;
 pub mod menu;
 pub mod ollama;
@@ -134,6 +135,9 @@ pub fn run() {
             commands::skill_set_enabled,
             commands::skill_search,
             commands::skill_execute_script,
+            browser_runtime::browser_open_url,
+            browser_runtime::browser_scan_text,
+            browser_runtime::browser_screenshot,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Destroyed = event {
