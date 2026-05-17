@@ -4,6 +4,7 @@
 // 能力层，不是策略层。不写 Timeline，不管理 Asset 生命周期。
 
 use std::time::Duration;
+use tauri::Manager;
 
 const BROWSER_CLI_BASE: &str = "http://localhost:18767";
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
