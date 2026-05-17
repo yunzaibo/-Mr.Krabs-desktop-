@@ -96,18 +96,46 @@ function handleBackToChat() {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border: 1px solid var(--hc-accent);
+  padding: 5px 12px;
   border-radius: var(--hc-radius-sm, 6px);
-  background: transparent;
-  color: var(--hc-accent);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
 
-.task-action-bar__btn:hover:not(:disabled) {
+/* Primary: filled */
+.task-action-bar__btn:first-child {
+  background: var(--hc-accent);
+  color: #fff;
+  border: 1px solid var(--hc-accent);
+}
+
+.task-action-bar__btn:first-child:hover:not(:disabled) {
+  background: var(--hc-accent-hover, color-mix(in srgb, var(--hc-accent) 85%, black));
+}
+
+/* Secondary: outlined */
+.task-action-bar__btn:nth-child(2) {
+  background: transparent;
+  color: var(--hc-accent);
+  border: 1px solid var(--hc-accent);
+}
+
+.task-action-bar__btn:nth-child(2):hover:not(:disabled) {
   background: var(--hc-accent-subtle, rgba(0, 122, 255, 0.08));
+}
+
+/* Tertiary: ghost */
+.task-action-bar__btn:nth-child(3) {
+  background: transparent;
+  color: var(--hc-text-muted);
+  border: 1px solid transparent;
+}
+
+.task-action-bar__btn:nth-child(3):hover:not(:disabled) {
+  color: var(--hc-text-primary);
+  background: var(--hc-bg-subtle);
 }
 
 .task-action-bar__btn:disabled {

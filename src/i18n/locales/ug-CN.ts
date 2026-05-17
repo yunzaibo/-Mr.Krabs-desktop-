@@ -1591,9 +1591,9 @@ export default {
     sections: {
       task: 'ۋەزىپە',
       skill: 'ماھارەت',
-      execution: 'ئىجرا',
+      execution: 'ئىلگىرىش',
       outputs: 'مەھسۇلات',
-      health: 'ساغلاملىق',
+      health: 'ھالەت',
     },
     taskList: {
       active: 'ئاكتىپ',
@@ -1631,8 +1631,8 @@ export default {
       label: 'دىئاگنوز',
       healthy: 'نورمال',
       warning: 'ئاگاھلاندۇرۇش',
-      critical: 'ئېغىر',
-      noIssues: 'مەسىلە يوق',
+      critical: 'خاتالىق كۆرۈلدى',
+      noIssues: 'ھەممىسى نورمال',
     },
     timeline: {
       title: 'ۋاقىت سىزىقى',

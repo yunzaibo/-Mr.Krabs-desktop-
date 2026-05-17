@@ -1611,10 +1611,10 @@ export default {
     sections: {
       task: '任务',
       skill: '技能',
-      execution: '执行',
+      execution: '进度',
       result: '结果',
       outputs: '产物',
-      health: '健康',
+      health: '状态',
     },
     taskList: {
       active: '运行中',
@@ -1652,8 +1652,8 @@ export default {
       label: '诊断信息',
       healthy: '正常',
       warning: '警告',
-      critical: '严重',
-      noIssues: '无异常',
+      critical: '出错了',
+      noIssues: '一切正常',
     },
     timeline: {
       title: 'Timeline',

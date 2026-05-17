@@ -536,13 +536,17 @@ function getGroupLabel(group: string): string {
   gap: 10px;
 }
 
-/* ── Primary Result ────────────────────────────── */
+/* ── Primary Result (hero) ──────────────────────── */
 
 .context-detail__primary-result {
-  font-size: 13px;
-  line-height: 1.6;
-  max-height: 400px;
+  font-size: 14px;
+  line-height: 1.7;
+  max-height: 500px;
   overflow-y: auto;
+  padding: 16px;
+  background: var(--hc-surface-elevated, rgba(0, 0, 0, 0.02));
+  border-left: 3px solid var(--hc-accent);
+  border-radius: 0 8px 8px 0;
 }
 
 .result-item {

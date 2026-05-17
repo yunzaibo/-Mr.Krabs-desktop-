@@ -1607,10 +1607,10 @@ export default {
     sections: {
       task: 'Task',
       skill: 'Skill',
-      execution: 'Execution',
+      execution: 'Progress',
       result: 'Result',
       outputs: 'Outputs',
-      health: 'Health',
+      health: 'Status',
     },
     taskList: {
       active: 'Active',
@@ -1648,8 +1648,8 @@ export default {
       label: 'Diagnostics',
       healthy: 'Healthy',
       warning: 'Warning',
-      critical: 'Critical',
-      noIssues: 'No issues',
+      critical: 'Something went wrong',
+      noIssues: 'All good',
     },
     timeline: {
       title: 'Timeline',
