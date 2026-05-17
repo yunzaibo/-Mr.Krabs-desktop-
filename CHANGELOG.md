@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.4.1 (2026-05-17)
+
+### Runtime Presence Phase 1 — 术语收敛 + TaskCard 组件
+
+基于 ANL-022 Runtime Presence Review 分析，执行 Phase 1 术语收敛（低成本高影响），将 Chat 语义全面替换为 Runtime 语义。
+
+#### 术语收敛（25 处 i18n 替换）
+- `开始对话` → `等待任务输入`；`Type a message...` → `输入任务指令...`
+- `思考过程` → `推理过程`；`Thought for Xs` → `推理 Xs`
+- `重新发送` → `重新执行`；`编辑消息` → `修改指令`
+- `Start Chat` → `开始任务`
+- zh-CN / en / ug-CN 三语言同步更新
+
+#### TaskCard 组件
+- 新增 `TaskCard.vue`：Linear/Cursor 风格任务执行卡片，包含状态徽章、耗时计数器、结果预览、Workspace 跳转按钮
+- 新增 `SummaryResultCard.vue` / `BulletResultCard.vue`：Result Surface 两种渲染模式
+- `ChatView` 集成 TaskCard 渲染（`kind='task-card'`），Chat 气泡与任务卡片共存
+
+#### ResultSurface 类型系统
+- 新增 `src/types/resultSurface.ts`：`ResultSurfaceKind` 类型定义
+- 新增 `src/types/taskCard.ts`：`TaskCardMetadata` 类型定义
+
+#### Workspace 增强
+- `ContextDetailPanel.vue` 新增 34 行，扩展 Workspace 详情面板
+- `workspaceProjector.ts` 新增投影逻辑
+- `workspace.ts` 类型扩展
+
+#### Skill Bridge / Chat 控制器
+- `skillBridge.ts` 增强 +85 行，支持 TaskCard 元数据传递
+- `chat-send-controller.ts` 增强 +84 行，支持任务状态管理
+
+#### 文档
+- 新增 `runtime-presence-review-v0.1.md`：ANL-022 产品感知层分析
+- 新增 `result-surface-design-v0.1.md`：Result Surface 设计文档
+- 新增 `workspace-runtime-design-v0.1.md`：Workspace Runtime 设计文档
+- README / README.en.md 添加 Runtime Workspace 愿景描述
+
+#### 工程
+- 版本号 0.4.0 → 0.4.1（package.json / tauri.conf.json / Cargo.toml / Cargo.lock 同步）
+- 22 文件变更，+1377 / -49 行
+
 ## v0.4.0 (2026-05-01)
 
 ### 重大重构 — 统一文本对话框（K12 友好 / 通用 Agent 范式）
