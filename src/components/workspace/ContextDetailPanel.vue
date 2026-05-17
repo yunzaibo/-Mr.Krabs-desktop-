@@ -17,7 +17,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { MessageCircle, Copy, FileText, Image, File, Code, Wrench } from 'lucide-vue-next'
+import { Copy, FileText, Image, File, Code, Wrench } from 'lucide-vue-next'
 import type { WorkspaceContextProjection, TaskResultProjection, ResultItemProjection } from '@/types/workspace'
 import TaskActionBar from '@/components/workspace/TaskActionBar.vue'
 import ContextCard from '@/components/inspector/ContextCard.vue'
@@ -40,6 +40,9 @@ const skillExpanded = ref(false)
 
 // Execution output section: 默认折叠
 const execOutputExpanded = ref(false)
+
+// Advanced toggle — 所有 section 共享
+const advancedExpanded = ref(false)
 
 watch(
   () => props.projection?.health?.hasIssues,
@@ -164,14 +167,6 @@ function getGroupLabel(group: string): string {
 
       <!-- Task section -->
       <ContextCard :eyebrow="t('workspace.sections.task')" :title="projection.task.goal || projection.taskId.slice(0, 8)">
-        <button
-          v-if="projection.task.navigation?.chatSessionId"
-          class="context-detail__nav-btn"
-          @click="navigateToChat(projection.task.navigation.chatSessionId)"
-        >
-          <MessageCircle :size="12" />
-          <span>{{ t('workspace.goToChat') }}</span>
-        </button>
         <KeyValueRow
           :label="t('workspace.field.status')"
           :value="projection.task.status"
@@ -182,28 +177,9 @@ function getGroupLabel(group: string): string {
           :value="`${projection.task.progress}%`"
         />
         <KeyValueRow
-          v-if="projection.task.skillName"
-          :label="t('workspace.field.skillName')"
-          :value="projection.task.skillName"
-        />
-        <KeyValueRow
           v-if="resultProjection?.duration"
           :label="t('workspace.field.elapsed')"
           :value="resultProjection.duration"
-        />
-        <KeyValueRow
-          :label="t('workspace.field.taskId')"
-          :value="projection.taskId"
-        />
-        <KeyValueRow
-          v-if="projection.task.inputSummary"
-          :label="t('workspace.field.input')"
-          :value="projection.task.inputSummary"
-        />
-        <KeyValueRow
-          v-if="projection.task.outputSummary"
-          :label="t('workspace.field.output')"
-          :value="projection.task.outputSummary"
         />
         <KeyValueRow
           v-if="projection.task.errorCode"
@@ -211,6 +187,28 @@ function getGroupLabel(group: string): string {
           :value="`${projection.task.errorCode}: ${projection.task.errorMessage || ''}`"
           :value-color="'var(--hc-error)'"
         />
+        <!-- Advanced: debug fields -->
+        <template v-if="advancedExpanded">
+          <KeyValueRow
+            :label="t('workspace.field.taskId')"
+            :value="projection.taskId"
+          />
+          <KeyValueRow
+            v-if="projection.task.skillName"
+            :label="t('workspace.field.skillName')"
+            :value="projection.task.skillName"
+          />
+          <KeyValueRow
+            v-if="projection.task.inputSummary"
+            :label="t('workspace.field.input')"
+            :value="projection.task.inputSummary"
+          />
+          <KeyValueRow
+            v-if="projection.task.outputSummary"
+            :label="t('workspace.field.output')"
+            :value="projection.task.outputSummary"
+          />
+        </template>
       </ContextCard>
 
       <!-- Skill section -->
@@ -219,40 +217,41 @@ function getGroupLabel(group: string): string {
         :eyebrow="t('workspace.sections.skill')"
         :title="`${projection.skill.skillId} v${projection.skill.version}`"
       >
-        <KeyValueRow
-          :label="t('workspace.field.instructions')"
-          :value="projection.skill.loadedSections.markdown
-            ? t('workspace.skill.markdownLoaded')
-            : t('workspace.skill.markdownUnloaded')"
-        />
-        <KeyValueRow
-          :label="t('workspace.field.references')"
-          :value="projection.skill.loadedSections.references
-            ? t('workspace.skill.referencesLoaded')
-            : t('workspace.skill.referencesUnloaded')"
-        />
-        <KeyValueRow
-          :label="t('workspace.field.status')"
-          :value="projection.skill.status"
-          :value-color="projection.skill.status === 'loaded'
-            ? 'var(--hc-success)'
-            : projection.skill.status === 'error'
-              ? 'var(--hc-error)'
-              : 'var(--hc-text-muted)'"
-        />
-        <!-- SKILL.md 内容（可折叠） -->
-        <div v-if="projection.skill.markdown" class="context-detail__skill-md">
-          <button
-            class="context-detail__skill-toggle"
-            @click="skillExpanded = !skillExpanded"
-          >
-            <span>{{ t('workspace.skill.viewInstructions') }}</span>
-            <span class="context-detail__skill-chevron" :class="{ 'open': skillExpanded }">▶</span>
-          </button>
-          <div v-if="skillExpanded" class="context-detail__skill-content">
-            <MarkdownRenderer :content="projection.skill.markdown" />
+        <template v-if="advancedExpanded">
+          <KeyValueRow
+            :label="t('workspace.field.instructions')"
+            :value="projection.skill.loadedSections.markdown
+              ? t('workspace.skill.markdownLoaded')
+              : t('workspace.skill.markdownUnloaded')"
+          />
+          <KeyValueRow
+            :label="t('workspace.field.references')"
+            :value="projection.skill.loadedSections.references
+              ? t('workspace.skill.referencesLoaded')
+              : t('workspace.skill.referencesUnloaded')"
+          />
+          <KeyValueRow
+            :label="t('workspace.field.status')"
+            :value="projection.skill.status"
+            :value-color="projection.skill.status === 'loaded'
+              ? 'var(--hc-success)'
+              : projection.skill.status === 'error'
+                ? 'var(--hc-error)'
+                : 'var(--hc-text-muted)'"
+          />
+          <div v-if="projection.skill.markdown" class="context-detail__skill-md">
+            <button
+              class="context-detail__skill-toggle"
+              @click="skillExpanded = !skillExpanded"
+            >
+              <span>{{ t('workspace.skill.viewInstructions') }}</span>
+              <span class="context-detail__skill-chevron" :class="{ 'open': skillExpanded }">▶</span>
+            </button>
+            <div v-if="skillExpanded" class="context-detail__skill-content">
+              <MarkdownRenderer :content="projection.skill.markdown" />
+            </div>
           </div>
-        </div>
+        </template>
       </ContextCard>
 
       <!-- Execution section -->
@@ -262,35 +261,32 @@ function getGroupLabel(group: string): string {
         :title="stateLabel(projection.execution.state)"
       >
         <KeyValueRow
-          :label="t('workspace.field.state')"
-          :value="stateLabel(projection.execution.state)"
-          :value-color="stateColor(projection.execution.state)"
-        />
-        <KeyValueRow
-          :label="t('workspace.field.stage')"
-          :value="stageLabel(projection.execution.stage)"
-        />
-        <KeyValueRow
-          :label="t('workspace.field.steps')"
-          :value="String(projection.execution.stepCount)"
-        />
-        <KeyValueRow
+          v-if="projection.execution.elapsed"
           :label="t('workspace.field.elapsed')"
           :value="projection.execution.elapsed"
         />
-        <!-- 执行输出（可折叠） -->
-        <div v-if="projection.execution.outputContent" class="context-detail__exec-output">
-          <button
-            class="context-detail__exec-toggle"
-            @click="execOutputExpanded = !execOutputExpanded"
-          >
-            <span>{{ t('workspace.execution.viewOutput') }}</span>
-            <span class="context-detail__exec-chevron" :class="{ 'open': execOutputExpanded }">▶</span>
-          </button>
-          <div v-if="execOutputExpanded" class="context-detail__exec-content">
-            <MarkdownRenderer :content="projection.execution.outputContent" />
+        <template v-if="advancedExpanded">
+          <KeyValueRow
+            :label="t('workspace.field.stage')"
+            :value="stageLabel(projection.execution.stage)"
+          />
+          <KeyValueRow
+            :label="t('workspace.field.steps')"
+            :value="String(projection.execution.stepCount)"
+          />
+          <div v-if="projection.execution.outputContent" class="context-detail__exec-output">
+            <button
+              class="context-detail__exec-toggle"
+              @click="execOutputExpanded = !execOutputExpanded"
+            >
+              <span>{{ t('workspace.execution.viewOutput') }}</span>
+              <span class="context-detail__exec-chevron" :class="{ 'open': execOutputExpanded }">▶</span>
+            </button>
+            <div v-if="execOutputExpanded" class="context-detail__exec-content">
+              <MarkdownRenderer :content="projection.execution.outputContent" />
+            </div>
           </div>
-        </div>
+        </template>
       </ContextCard>
 
       <!-- Primary Result section — 主要文本结果 -->
@@ -410,6 +406,15 @@ function getGroupLabel(group: string): string {
           />
         </div>
       </ContextCard>
+
+      <!-- Advanced toggle -->
+      <button
+        class="context-detail__advanced-toggle"
+        @click="advancedExpanded = !advancedExpanded"
+      >
+        <span>{{ t('workspace.field.advanced') }}</span>
+        <span class="context-detail__advanced-chevron" :class="{ 'open': advancedExpanded }">▶</span>
+      </button>
     </template>
   </div>
 </template>
@@ -672,5 +677,36 @@ function getGroupLabel(group: string): string {
 .result-item__copy-btn:hover {
   background: var(--hc-bg-hover);
   color: var(--hc-text-primary);
+}
+
+/* ── Advanced toggle ──────────────────────────── */
+
+.context-detail__advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-top: 1px solid var(--hc-divider);
+  background: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--hc-text-muted);
+  transition: color 0.15s;
+}
+
+.context-detail__advanced-toggle:hover {
+  color: var(--hc-accent);
+}
+
+.context-detail__advanced-chevron {
+  font-size: 8px;
+  transition: transform 0.15s;
+}
+
+.context-detail__advanced-chevron.open {
+  transform: rotate(90deg);
 }
 </style>

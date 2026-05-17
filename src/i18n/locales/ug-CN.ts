@@ -1702,6 +1702,9 @@ export default {
       elapsed: 'سەرپىيە',
       issues: 'مەسىلە',
       severity: 'ئېغىرلىق',
+      skillName: 'ماھارەت نامى',
+      taskId: 'ۋەزىپە ID',
+      advanced: 'تەپسىلات',
     },
   },
 

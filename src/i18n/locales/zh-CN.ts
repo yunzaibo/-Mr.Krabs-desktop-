@@ -1726,6 +1726,7 @@ export default {
       severity: '严重度',
       skillName: '技能名称',
       taskId: '任务 ID',
+      advanced: '详细信息',
     },
   },
 

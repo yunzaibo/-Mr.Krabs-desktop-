@@ -1722,6 +1722,7 @@ export default {
       severity: 'Severity',
       skillName: 'Skill Name',
       taskId: 'Task ID',
+      advanced: 'Details',
     },
   },
 
