@@ -139,6 +139,30 @@ function getKindIcon(kind: ResultItemProjection['kind']) {
   return map[kind] ?? File
 }
 
+// ── Code block rendering helpers ───────────────────
+
+function inferLanguage(title: string): string {
+  const ext = title.split('.').pop()?.toLowerCase() ?? ''
+  const map: Record<string, string> = {
+    py: 'python', ts: 'typescript', tsx: 'typescript',
+    js: 'javascript', jsx: 'javascript', rs: 'rust',
+    go: 'go', json: 'json', md: 'markdown',
+    html: 'html', css: 'css', sh: 'bash',
+  }
+  return map[ext] ?? ''
+}
+
+function wrapAsCodeBlock(code: string, title: string): string {
+  // 已经是 fenced code block → 直接使用，不嵌套
+  if (/^```/.test(code.trim())) return code
+  const lang = inferLanguage(title)
+  const fenced = '```' + lang + '\n' + code + '\n```'
+  if (fenced.length > 2000) {
+    return fenced.slice(0, 2000) + '\n// ... truncated'
+  }
+  return fenced
+}
+
 function getGroupLabel(group: string): string {
   const map: Record<string, string> = {
     primary: t('workspace.result.primaryGroup'),
@@ -317,7 +341,7 @@ function getGroupLabel(group: string): string {
               <component :is="getKindIcon(item.kind)" :size="14" class="result-item__icon" />
               <div class="result-item__info">
                 <span class="result-item__title">{{ item.title }}</span>
-                <span v-if="item.description" class="result-item__desc">{{ item.description }}</span>
+                <span v-if="item.description && item.kind !== 'code'" class="result-item__desc">{{ item.description }}</span>
               </div>
               <span class="result-item__group-tag">{{ getGroupLabel(item.group) }}</span>
               <span
@@ -329,6 +353,24 @@ function getGroupLabel(group: string): string {
               >
                 ●
               </span>
+            </div>
+            <!-- Code block preview (read-only, no editor) -->
+            <div v-if="item.kind === 'code' && item.description" class="result-item__code">
+              <MarkdownRenderer :content="wrapAsCodeBlock(item.description, item.title)" />
+            </div>
+            <!-- Image placeholder (no real rendering) -->
+            <div v-else-if="item.kind === 'image'" class="result-item__image-placeholder">
+              <div class="result-item__image-icon-box">
+                <Image :size="24" class="result-item__image-icon" />
+              </div>
+              <div class="result-item__image-info">
+                <span v-if="item.dimensions" class="result-item__image-dims">
+                  {{ item.dimensions.width }}×{{ item.dimensions.height }}
+                </span>
+                <span v-if="item.sizeBytes !== undefined" class="result-item__image-size">
+                  {{ formatSize(item.sizeBytes) }}
+                </span>
+              </div>
             </div>
             <!-- Metadata row -->
             <div class="result-item__meta">
@@ -677,6 +719,59 @@ function getGroupLabel(group: string): string {
 .result-item__copy-btn:hover {
   background: var(--hc-bg-hover);
   color: var(--hc-text-primary);
+}
+
+/* ── Code block in result item ──────────────────── */
+.result-item__code {
+  margin-top: 8px;
+  padding-left: 22px;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 4px;
+}
+
+/* ── Image placeholder in result item ───────────── */
+.result-item__image-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  margin-left: 22px;
+  background: var(--hc-bg-hover);
+  border-radius: 4px;
+  border: 1px dashed var(--hc-border-subtle);
+}
+
+.result-item__image-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background: var(--hc-bg-active);
+  flex-shrink: 0;
+}
+
+.result-item__image-icon {
+  color: var(--hc-text-muted);
+}
+
+.result-item__image-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.result-item__image-dims {
+  font-size: 10px;
+  color: var(--hc-text-secondary);
+}
+
+.result-item__image-size {
+  font-size: 10px;
+  color: var(--hc-text-muted);
 }
 
 /* ── Advanced toggle ──────────────────────────── */
