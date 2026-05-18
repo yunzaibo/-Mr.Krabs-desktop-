@@ -231,16 +231,12 @@ describe('Chat store — ensureSession 并发安全', () => {
 // ═══════════════════════════════════════════════════
 
 describe('API 层安全 — 用户可控参数必须 URI 编码', () => {
-  it('uninstallSkill name 参数未编码（用户输入的 skill 名）', () => {
+  it('uninstallSkill uses Tauri invoke (path encoding handled by Rust backend)', () => {
     const source = readFileSync('src/api/skills.ts', 'utf-8')
-    const fnStart = source.indexOf('export function uninstallSkill')
-    const fnEnd = source.indexOf('}', fnStart)
-    const fn = source.slice(fnStart, fnEnd + 1)
-
-    // 用户选择的 skill 名可能含特殊字符
-    // 修复前 FAIL：直接 ${name}
-    // 修复后 PASS：${encodeURIComponent(name)}
-    expect(fn).toContain('encodeURIComponent')
+    // After G4 cleanup, skills.ts uses invoke('skill_uninstall', ...) instead of
+    // apiDelete with URL paths. Path encoding is handled by the Rust backend.
+    expect(source).toContain("invoke<")
+    expect(source).toContain("'skill_uninstall'")
   })
 })
 

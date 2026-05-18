@@ -303,60 +303,29 @@ runtime-llm-contract-v0.1
 
 ---
 
-# Phase 5: execMode Convergence
+# Phase 5: execMode Convergence ✅ 已完成
 
 ## 目标
 
 收敛 WebSocket / Runtime 双路径漂移。
 
-当前问题：
+## 完成情况 (v0.4.2+)
 
-```txt
-WS path 与 Runtime path 并存
-execMode toggle 产品语义不清晰
-```
-
-## 推荐文档路径
-
-```txt
-docs/refactor/modules/module-011-execmode-convergence.md
-```
-
-## 主要改动
-
-| 文件 | 目标 |
-|---|---|
-| `chat-send-controller.ts` | 收敛执行路径 |
-| `settings.ts` | 移除或隐藏 execMode toggle |
-| `chatService.ts` | 标记 legacy/deprecated |
-
-## 风险
-
-高于前几个模块。影响所有 chat 发送路径。
-
-## 建议策略
-
-先做分析，不直接执行：
-
-```txt
-analyze → plan → execute
-```
+- `chat-send-controller.ts` 已只走 Runtime 路径（`executeChatTask()` → RuntimeStore）
+- `settings.ts` 无 execMode toggle（从未存在）
+- `chatService.ts` 清理完成：移除 `sendViaWebSocket`、`openWebSocketStream`、`sendViaBackend`、`ensureWebSocketConnected`、`ChatRequestError`、`withTimeout`，保留 `resumeWebSocketStream`（流恢复）+ `clearWebSocketCallbacks`（清理）
+- 删除 3 个 delivery controller 死代码文件
+- 测试同步清理，19 个旧路径测试标记 skip
 
 ## 验收标准
 
 | 验收项 | 标准 |
 |---|---|
-| 普通 chat | 走 Runtime path |
-| skill task | 正常 |
-| TaskCard | 正常 |
-| systemPrompt | 正常 |
-| streaming | 明确保留/延后策略 |
-
-## 建议 tag
-
-```txt
-execmode-convergence-v0.1
-```
+| 普通 chat | 走 Runtime path ✅ |
+| skill task | 正常 ✅ |
+| TaskCard | 正常 ✅ |
+| systemPrompt | 正常 ✅ |
+| streaming | 明确保留/延后策略 ✅（Runtime path 为 request-response，streaming 仅用于 recovery） |
 
 ---
 

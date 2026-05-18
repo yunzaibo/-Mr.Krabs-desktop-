@@ -15,6 +15,9 @@ vi.mock('lucide-vue-next', () => ({
   Blocks: 'Blocks',
   ScrollText: 'ScrollText',
   Settings: 'Settings',
+  Activity: 'Activity',
+  Component: 'Component',
+  Monitor: 'Monitor',
 }))
 
 import {
@@ -46,13 +49,14 @@ describe('navigationItems data integrity', () => {
     }
   })
 
-  it('total count is 9', () => {
-    expect(navigationItems).toHaveLength(9)
+  it('total count is 11', () => {
+    expect(navigationItems).toHaveLength(11)
     const ids = navigationItems.map((n) => n.id)
     expect(ids).toEqual(
       expect.arrayContaining([
         'dashboard', 'chat', 'channels', 'agents',
-        'knowledge', 'automation', 'integration', 'logs', 'settings',
+        'knowledge', 'runtime', 'workspace',
+        'automation', 'integration', 'logs', 'settings',
       ]),
     )
   })
@@ -69,8 +73,8 @@ describe('getGroupedNavItems()', () => {
     expect(Object.keys(groups).sort()).toEqual(['core', 'integration', 'system'])
   })
 
-  it('core has 6 items', () => {
-    expect(groups.core).toHaveLength(6)
+  it('core has 8 items', () => {
+    expect(groups.core).toHaveLength(8)
   })
 
   it('integration has 2 items (integration + logs)', () => {
@@ -78,6 +82,11 @@ describe('getGroupedNavItems()', () => {
     const ids = groups.integration.map((n) => n.id)
     expect(ids).toContain('integration')
     expect(ids).toContain('logs')
+  })
+
+  it('integration group item has 3 children', () => {
+    const integrationItem = groups.integration.find((n) => n.id === 'integration')
+    expect(integrationItem?.children).toHaveLength(3)
   })
 
   it('system has 1 item (settings)', () => {

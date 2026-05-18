@@ -7,7 +7,7 @@ import { useChatStore } from '@/stores/chat'
 import { registerChatTask, executeChatTask } from '@/services/runtimeBridge'
 import { buildAssistantMessage } from '@/utils/buildAssistantMessage'
 import type { TaskCardMetadata } from '@/types/taskCard'
-import type { ResultSurfaceMetadata } from '@/types/resultSurface'
+// ResultSurfaceMetadata import removed — unused after G4 cleanup
 import { createChatSendAutoTitleController } from './chat-send-auto-title'
 import { shouldBlockChatSend, shouldSeedChatAutoTitle } from './chat-send-guards'
 import { tryExecuteSkill } from '@/services/skillBridge'

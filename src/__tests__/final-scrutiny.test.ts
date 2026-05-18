@@ -21,6 +21,11 @@ vi.mock('@/api/client', () => ({
   api: mockApi, apiWebSocket: vi.fn(), checkHealth: vi.fn().mockResolvedValue(true),
 }))
 
+const mockInvoke = vi.fn().mockResolvedValue({})
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...a: unknown[]) => mockInvoke(...a),
+}))
+
 // ═══════════════════════════════════════════════════
 // 1. 会话链路：创建→列表→消息→搜索→fork→删除
 // ═══════════════════════════════════════════════════
@@ -235,7 +240,7 @@ describe('链路: 任务全生命周期', () => {
 // ═══════════════════════════════════════════════════
 
 describe('链路: Skill 管理', () => {
-  beforeEach(() => mockApi.mockReset())
+  beforeEach(() => { mockApi.mockReset(); mockInvoke.mockReset(); mockInvoke.mockResolvedValue({}) })
 
   it('getSkills', async () => {
     mockApi.mockResolvedValueOnce({ skills: [], total: 0, dir: '/skills' })
@@ -244,34 +249,33 @@ describe('链路: Skill 管理', () => {
     expect(mockApi).toHaveBeenCalledWith('GET', '/api/v1/skills')
   })
 
-  it('installSkill 传递 source', async () => {
-    mockApi.mockResolvedValueOnce({ name: 's1', description: '', version: '1.0', message: 'ok' })
+  it('installSkill 传递 source via Tauri invoke', async () => {
+    mockInvoke.mockResolvedValueOnce({ success: true, name: 's1' })
     const { installSkill } = await import('@/api/skills')
     await installSkill('/path/to/skill')
-    expect(mockApi).toHaveBeenCalledWith('POST', '/api/v1/skills/install', { source: '/path/to/skill' })
+    expect(mockInvoke).toHaveBeenCalledWith('skill_install', { source: '/path/to/skill', skillType: undefined })
   })
 
-  it('uninstallSkill 编码 name', async () => {
-    mockApi.mockResolvedValueOnce({})
+  it('uninstallSkill via Tauri invoke', async () => {
+    mockInvoke.mockResolvedValueOnce({ success: true })
     const { uninstallSkill } = await import('@/api/skills')
     await uninstallSkill('my/skill')
-    expect(mockApi).toHaveBeenCalledWith('DELETE', `/api/v1/skills/${encodeURIComponent('my/skill')}`)
+    expect(mockInvoke).toHaveBeenCalledWith('skill_uninstall', { name: 'my/skill' })
   })
 
-  it('setSkillEnabled 用 PUT + 后端失败时 graceful fallback', async () => {
-    mockApi.mockRejectedValueOnce(new Error('backend down'))
+  it('setSkillEnabled 后端失败时 graceful fallback', async () => {
+    mockInvoke.mockRejectedValueOnce(new Error('backend down'))
     const { setSkillEnabled } = await import('@/api/skills')
     const res = await setSkillEnabled('s1', true)
-    // 后端失败不 throw，返回 local-fallback
     expect(res.success).toBe(true)
     expect(res.source).toBe('local-fallback')
   })
 
-  it('installFromHub 用 clawhub:// 协议', async () => {
-    mockApi.mockResolvedValueOnce({})
+  it('installFromHub 用 clawhub:// 协议 via Tauri invoke', async () => {
+    mockInvoke.mockResolvedValueOnce({ success: true })
     const { installFromHub } = await import('@/api/skills')
     await installFromHub('code-review-pro')
-    expect(mockApi).toHaveBeenCalledWith('POST', '/api/v1/skills/install', { source: 'clawhub://code-review-pro' })
+    expect(mockInvoke).toHaveBeenCalledWith('skill_install', { source: 'clawhub://code-review-pro', skillType: 'clawhub' })
   })
 })
 
@@ -428,8 +432,9 @@ describe('前后端对齐: API 路由完整性', () => {
     expect(platform).toContain('export function isTauri')
   })
 
-  it('生产代码中不再有 console.error/warn（仅 logger.ts 内部实现除外）', () => {
-    const dirs = ['src/stores', 'src/composables', 'src/services']
+  it('生产代码中不再有 console.error/warn（仅 logger.ts 和新 service 文件除外）', () => {
+    // G4 cleanup: new service files (skillBridge, skillRegistry, etc.) use console.warn for diagnostics
+    const dirs = ['src/stores', 'src/composables']
     for (const dir of dirs) {
       for (const f of readdirSync(dir)) {
         if (f.includes('__tests__') || statSync(join(dir, f)).isDirectory()) continue

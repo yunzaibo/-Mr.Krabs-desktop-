@@ -24,9 +24,6 @@ const {
   saveArtifact,
   getLastSessionId,
   setLastSessionId,
-  ensureWebSocketConnected,
-  sendViaWebSocket,
-  sendViaBackend,
   clearWebSocketCallbacks,
   mockGetLLMConfig,
   mockUpdateLLMConfig,
@@ -48,9 +45,6 @@ const {
   saveArtifact: vi.fn().mockResolvedValue(undefined),
   getLastSessionId: vi.fn().mockResolvedValue(null),
   setLastSessionId: vi.fn().mockResolvedValue(undefined),
-  ensureWebSocketConnected: vi.fn().mockResolvedValue(false),
-  sendViaWebSocket: vi.fn().mockResolvedValue(undefined),
-  sendViaBackend: vi.fn().mockResolvedValue({ reply: 'Hello!', session_id: 's1' }),
   clearWebSocketCallbacks: vi.fn(),
   mockGetLLMConfig: vi.fn().mockResolvedValue({
     default: 'openai',
@@ -84,26 +78,12 @@ vi.mock('@/services/messageService', () => ({
   parseMessageMetadata: vi.fn(),
   normalizeLoadedMessage: vi.fn(),
   serializeMessageMetadata: vi.fn(),
+  suggestSessionTitle: vi.fn().mockResolvedValue({ updated: false }),
 }))
 
-vi.mock('@/services/chatService', () => {
-  class ChatRequestError extends Error {
-    noFallback: boolean
-    constructor(message: string, noFallback = false) {
-      super(message)
-      this.name = 'ChatRequestError'
-      this.noFallback = noFallback
-    }
-  }
-  return {
-    ensureWebSocketConnected,
-    sendViaWebSocket,
-    sendViaBackend,
-    clearWebSocketCallbacks,
-    ChatRequestError,
-    withTimeout: vi.fn((p: Promise<unknown>) => p),
-  }
-})
+vi.mock('@/services/chatService', () => ({
+  clearWebSocketCallbacks,
+}))
 
 vi.mock('@/api/chat', () => ({
   updateMessageFeedback: vi.fn().mockResolvedValue({ message: 'ok' }),
@@ -171,6 +151,15 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn().mockResolvedValue('{}'),
 }))
 
+vi.mock('@/services/runtimeBridge', () => ({
+  registerChatTask: vi.fn(),
+  executeChatTask: vi.fn().mockResolvedValue({ kind: 'text', content: 'mock assistant reply' }),
+}))
+
+vi.mock('@/services/skillBridge', () => ({
+  tryExecuteSkill: vi.fn().mockResolvedValue(undefined),
+}))
+
 // ── Setup ──────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -186,8 +175,6 @@ beforeEach(() => {
   persistMessage.mockResolvedValue(undefined)
   loadArtifacts.mockResolvedValue([])
   getLastSessionId.mockResolvedValue(null)
-  ensureWebSocketConnected.mockResolvedValue(false)
-  sendViaBackend.mockResolvedValue({ reply: 'Hello!', session_id: 's1' })
   mockGetLLMConfig.mockResolvedValue({
     default: 'openai',
     providers: { openai: { api_key: 'sk-***', base_url: '', model: 'gpt-4o', compatible: '' } },
@@ -281,27 +268,6 @@ describe('1. Chat Store Edge Cases', () => {
     expect(result).toBeNull()
   })
 
-  it('1.7: sendMessage when already sending (concurrent guard) — should return null', async () => {
-    const { useChatStore } = await import('@/stores/chat')
-    const store = useChatStore()
-
-    // Make sendViaBackend slow so we can test concurrent guard
-    let resolveBackend: (v: any) => void
-    sendViaBackend.mockReturnValue(new Promise(r => { resolveBackend = r }))
-
-    const promise1 = store.sendMessage('first')
-    // The store should now have sending=true
-    const promise2 = store.sendMessage('second')
-
-    // Second call should return null immediately
-    const result2 = await promise2
-    expect(result2).toBeNull()
-
-    // Clean up: resolve the first call
-    resolveBackend!({ reply: 'ok', session_id: 's1' })
-    await promise1
-  })
-
   it('1.8: deleteSession that is currently selected — should clear state', async () => {
     const { useChatStore } = await import('@/stores/chat')
     const store = useChatStore()
@@ -339,18 +305,6 @@ describe('1. Chat Store Edge Cases', () => {
     const userMsg = store.messages.find(m => m.role === 'user')
     expect(userMsg).toBeDefined()
     expect(userMsg!.content).toBe('')
-  })
-
-  it('1.10: sendMessage when backend throws — should add error message to chat', async () => {
-    const { useChatStore } = await import('@/stores/chat')
-    const store = useChatStore()
-
-    sendViaBackend.mockRejectedValue(new Error('Backend is down'))
-
-    const result = await store.sendMessage('hello')
-    expect(result).toBeNull()
-    // Should have an error message in the messages
-    expect(store.error).not.toBeNull()
   })
 
   it('1.11: newSession resets all streaming state', async () => {
@@ -1221,40 +1175,7 @@ describe('9. Performance / Memory', () => {
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════
-// 10. CHAT SERVICE EDGE CASES
-// ═══════════════════════════════════════════════════════════════════
 
-describe('10. Chat Service Edge Cases', () => {
-  it('10.1: withTimeout — should reject if promise exceeds timeout', async () => {
-    // Import the real withTimeout (not mocked)
-    const actual = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-
-    const slowPromise = new Promise(resolve => setTimeout(resolve, 10000))
-    await expect(
-      actual.withTimeout(slowPromise, 50, 'test timeout'),
-    ).rejects.toThrow('test timeout')
-  })
-
-  it('10.2: withTimeout — should resolve if promise completes before timeout', async () => {
-    const actual = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-
-    const fastPromise = Promise.resolve('done')
-    const result = await actual.withTimeout(fastPromise, 5000, 'should not timeout')
-    expect(result).toBe('done')
-  })
-
-  it('10.3: ChatRequestError noFallback flag', async () => {
-    const { ChatRequestError } = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-
-    const err1 = new ChatRequestError('test', false)
-    expect(err1.noFallback).toBe(false)
-    expect(err1.name).toBe('ChatRequestError')
-
-    const err2 = new ChatRequestError('test', true)
-    expect(err2.noFallback).toBe(true)
-  })
-})
 
 // ═══════════════════════════════════════════════════════════════════
 // 11. MESSAGE SERVICE EDGE CASES

@@ -1204,28 +1204,7 @@ describe('12. Router / navigation', () => {
 // ════════════════════════════════════════════════════════
 
 describe('13. Structural edge cases', () => {
-  it('chatService withTimeout: rejects on timeout', async () => {
-    const { withTimeout } = await import('@/services/chatService')
-    const slowPromise = new Promise(r => setTimeout(r, 10000))
-    await expect(withTimeout(slowPromise, 10, 'timed out')).rejects.toThrow('timed out')
-  })
-
-  it('chatService withTimeout: resolves normally when fast', async () => {
-    const { withTimeout } = await import('@/services/chatService')
-    expect(await withTimeout(Promise.resolve(42), 5000, 'timed out')).toBe(42)
-  })
-
-  it('chatService ChatRequestError: noFallback flag preserved', async () => {
-    const { ChatRequestError } = await import('@/services/chatService')
-    const err = new ChatRequestError('test error', true)
-    expect(err.noFallback).toBe(true)
-    expect(err.name).toBe('ChatRequestError')
-
-    const err2 = new ChatRequestError('test2')
-    expect(err2.noFallback).toBe(false)
-  })
-
-  it('messageService setLastSessionId / getLastSessionId roundtrip', async () => {
+ it('setLastSessionId / getLastSessionId roundtrip', async () => {
     const { setLastSessionId, getLastSessionId } = await import('@/services/messageService')
     setLastSessionId('session-xyz')
     expect(getLastSessionId()).toBe('session-xyz')

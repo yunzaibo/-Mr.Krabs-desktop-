@@ -717,91 +717,42 @@ describe('knowledge.ts', () => {
 // ===========================================================================
 
 describe('skills.ts', () => {
-  describe('mapHubMetaToClawHubSkill() via searchClawHub()', () => {
-    it('null name becomes empty string via nullish coalescing (name ?? "")', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        skills: [{ name: null, description: 'desc', author: 'a', version: '1' }],
-      } as never)
-
-      const results = await searchClawHub()
-      // null ?? '' evaluates to '', so String('') === ''
-      // NOTE: If the code used `||` instead of `??`, this would also be ''
-      // but if it used String(m.name) directly, null would become "null"
-      expect(results[0]!.name).toBe('')
-    })
-
-    it('undefined name becomes empty string', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        skills: [{ description: 'desc', author: 'a', version: '1' }],
-      } as never)
-
-      const results = await searchClawHub()
-      // String(undefined ?? '') === ''  -- m.name is undefined, fallback is ''
-      expect(results[0]!.name).toBe('')
-    })
-
-    it('tags that are not an array become empty array', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        skills: [{ name: 'x', tags: 'not-array', description: '', author: '', version: '' }],
-      } as never)
-
-      const results = await searchClawHub()
-      expect(results[0]!.tags).toEqual([])
-    })
-
-    it('invalid category defaults to coding', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        skills: [{ name: 'x', category: 'invalid-cat', description: '', author: '', version: '' }],
-      } as never)
-
-      const results = await searchClawHub()
-      expect(results[0]!.category).toBe('coding')
-    })
-  })
-
   describe('searchClawHub()', () => {
-    it('always requests type=skill so MCP entries stay out of the skills marketplace', async () => {
-      mockedApiGet.mockResolvedValueOnce({ skills: [] } as never)
+    it('calls Tauri invoke skill_search command with correct params', async () => {
+      mockedInvoke.mockResolvedValueOnce([] as never)
 
       await searchClawHub('review', 'coding')
 
-      expect(mockedApiGet).toHaveBeenCalledWith('/api/v1/clawhub/search', {
-        q: 'review',
+      expect(mockedInvoke).toHaveBeenCalledWith('skill_search', {
+        query: 'review',
         category: 'coding',
-        type: 'skill',
       })
     })
 
-    it('handles response that is an array directly (edge case)', async () => {
-      // When res is an array (no .skills), the code checks Array.isArray(res)
-      mockedApiGet.mockResolvedValueOnce([
-        { name: 'skill-a', description: 'd', author: 'a', version: '1', tags: [], category: 'data' },
+    it('maps invoke response to ClawHubSkill array', async () => {
+      mockedInvoke.mockResolvedValueOnce([
+        { name: 'skill-a', description: 'd', author: 'a', version: '1', tags: ['tag1'], category: 'data', downloads: 42 },
       ] as never)
 
       const results = await searchClawHub()
       expect(results).toHaveLength(1)
       expect(results[0]!.name).toBe('skill-a')
       expect(results[0]!.category).toBe('data')
+      expect(results[0]!.tags).toEqual(['tag1'])
+      expect(results[0]!.downloads).toBe(42)
     })
 
-    it('drops mixed MCP entries from the hub response defensively', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        skills: [
-          { name: 'skill-a', description: 'd', author: 'a', version: '1', tags: [], category: 'data', type: 'skill' },
-          { name: 'filesystem', description: 'mcp', author: 'a', version: '1', tags: [], category: 'automation', type: 'mcp' },
-        ],
-      } as never)
+    it('defaults downloads to 0 when not provided', async () => {
+      mockedInvoke.mockResolvedValueOnce([
+        { name: 'skill-b', description: 'd', author: 'a', version: '1', tags: [], category: 'coding' },
+      ] as never)
 
       const results = await searchClawHub()
-
-      expect(results).toHaveLength(1)
-      expect(results[0]!.name).toBe('skill-a')
+      expect(results[0]!.downloads).toBe(0)
     })
 
-    it('throws when response has error field', async () => {
-      mockedApiGet.mockResolvedValueOnce({
-        error: 'Hub unavailable',
-      } as never)
+    it('throws when invoke fails', async () => {
+      mockedInvoke.mockRejectedValueOnce(new Error('Hub unavailable'))
 
       await expect(searchClawHub()).rejects.toThrow('Hub unavailable')
     })
@@ -809,7 +760,7 @@ describe('skills.ts', () => {
 
   describe('setSkillEnabled()', () => {
     it('returns local-fallback result when backend is unreachable', async () => {
-      mockedApiPut.mockRejectedValueOnce(new Error('ECONNREFUSED'))
+      mockedInvoke.mockRejectedValueOnce(new Error('ECONNREFUSED'))
 
       const result = await setSkillEnabled('test-skill', true)
       expect(result.source).toBe('local-fallback')

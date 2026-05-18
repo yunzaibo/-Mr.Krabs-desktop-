@@ -86,16 +86,18 @@ describe('useShortcuts — 动态映射', () => {
 })
 
 describe('ChatAttachment 数据完整性', () => {
-  // 附件映射逻辑已迁移到 services/chatService.ts
-  const chatServiceSrc = readSrc('services/chatService.ts')
+  // 附件映射逻辑已迁移到 chat-send-controller + runtime bridge
+  const chatSendControllerSrc = readSrc('stores/chat-send-controller.ts')
   const chatApiSrc = readSrc('api/chat.ts')
+  const chatTypesSrc = readSrc('types/chat.ts')
 
-  it('sendMessageViaBackend 映射 attachment 使用 data 而非 url', () => {
-    expect(chatServiceSrc).toContain('a.data')
+  it('ChatAttachment 类型定义包含 data 和 mime 字段', () => {
+    expect(chatTypesSrc).toContain('data:')
+    expect(chatTypesSrc).toContain('mime:')
   })
 
-  it('sendMessageViaBackend 映射包含 mime 字段', () => {
-    expect(chatServiceSrc).toContain('a.mime')
+  it('chat-send-controller 接受 attachments 参数', () => {
+    expect(chatSendControllerSrc).toContain('attachments?:')
   })
 
   it('sendChatViaBackend 签名接受 attachments 参数', () => {
