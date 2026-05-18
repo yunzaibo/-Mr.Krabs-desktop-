@@ -14,10 +14,13 @@ import type { ResultSurfaceKind } from '@/types/resultSurface'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import SummaryResultCard from './SummaryResultCard.vue'
 import BulletResultCard from './BulletResultCard.vue'
+import AssetResultCard from './AssetResultCard.vue'
+import type { AssetMeta } from './AssetResultCard.vue'
 
 const props = defineProps<TaskCardMetadata & {
   resultKind?: ResultSurfaceKind
   content?: string
+  assetMeta?: AssetMeta
 }>()
 
 const router = useRouter()
@@ -131,6 +134,9 @@ function openWorkspace() {
       </template>
       <template v-else-if="status === 'completed' && resultKind === 'bullet'">
         <BulletResultCard :content="content || ''" />
+      </template>
+      <template v-else-if="status === 'completed' && resultKind === 'asset'">
+        <AssetResultCard :content="content || ''" :asset-meta="assetMeta" />
       </template>
       <div v-else-if="truncatedPreview" class="task-card__preview">
         <MarkdownRenderer :content="truncatedPreview" />

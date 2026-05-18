@@ -10,7 +10,7 @@
  * 'summary' : structured summary layout (from summarize skill)
  * 'bullet'  : compact bullet-point layout (from bulletize skill)
  */
-export type ResultSurfaceKind = 'text' | 'summary' | 'bullet'
+export type ResultSurfaceKind = 'text' | 'summary' | 'bullet' | 'asset'
 
 /**
  * Infer result surface kind from skill ID.
@@ -21,7 +21,7 @@ export function inferResultKind(
   skillId: string,
   meta?: { resultKind?: string },
 ): ResultSurfaceKind {
-  if (meta?.resultKind && ['text', 'summary', 'bullet'].includes(meta.resultKind)) {
+  if (meta?.resultKind && ['text', 'summary', 'bullet', 'asset'].includes(meta.resultKind)) {
     return meta.resultKind as ResultSurfaceKind
   }
   switch (skillId) {
