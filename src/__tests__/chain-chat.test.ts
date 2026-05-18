@@ -25,6 +25,10 @@ const {
   getLastSessionId,
   setLastSessionId,
   clearWebSocketCallbacks,
+  // deleted chatService exports — stubs for skipped tests only
+  sendViaBackend,
+  ensureWebSocketConnected,
+  openWebSocketStream,
 } = vi.hoisted(() => ({
   loadAllSessions: vi.fn().mockResolvedValue([]),
   loadMessages: vi.fn().mockResolvedValue([]),
@@ -39,6 +43,10 @@ const {
   getLastSessionId: vi.fn().mockResolvedValue(null),
   setLastSessionId: vi.fn().mockResolvedValue(undefined),
   clearWebSocketCallbacks: vi.fn(),
+  // deleted chatService exports — stubs for skipped tests only
+  sendViaBackend: vi.fn(),
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
 }))
 
 // ── Module mocks ───────────────────────────────────────────────────
@@ -63,6 +71,10 @@ vi.mock('@/services/messageService', () => ({
 
 vi.mock('@/services/chatService', () => ({
   clearWebSocketCallbacks,
+  // deleted exports — stubs for skipped tests only
+  sendViaBackend: vi.fn(),
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
 }))
 
 vi.mock('@/api/chat', () => ({

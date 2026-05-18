@@ -64,6 +64,10 @@ const mockChatSvc = {
     done: Promise.resolve({ content: 'resumed-reply' }),
   })),
   clearWebSocketCallbacks: vi.fn(),
+  // deleted exports — stubs for skipped tests only
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
+  sendViaBackend: vi.fn(),
 }
 vi.mock('@/services/chatService', () => mockChatSvc)
 
@@ -317,18 +321,7 @@ describe('Chat Store', () => {
     })
 
     it.skip('ChatRequestError with noFallback=true -> no HTTP fallback', async () => {
-    // [REMOVED: references deleted chatService exports]
-      mockChatSvc.ensureWebSocketConnected.mockResolvedValue(true)
-      mockChatSvc.openWebSocketStream.mockImplementation(() => ({
-        cancel: vi.fn(),
-        done: Promise.reject(new MockChatRequestError('backend error', true)),
-      }))
-
-      const store = await getChatStore()
-      const msg = await store.sendMessage('hello')
-
-      expect(mockChatSvc.sendViaBackend).not.toHaveBeenCalled()
-      expect(msg).toBeNull()
+    // [REMOVED: references deleted ChatRequestError export]
     })
   })
 
@@ -993,159 +986,42 @@ describe('Chat Service', () => {
   describe('withTimeout()', () => {
     it.skip('resolves before timeout -> returns value', async () => {
     // [REMOVED: references deleted chatService exports]
-      // Import the real function from chatService mock
-      // Since chatService is mocked, we test the concept directly
-      const { withTimeout } = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-      const result = await withTimeout(Promise.resolve(42), 1000, 'timed out')
-      expect(result).toBe(42)
     })
 
     it.skip('exceeds timeout -> rejects with message', async () => {
     // [REMOVED: references deleted chatService exports]
-      const { withTimeout } = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-      const neverResolves = new Promise(() => {})
-      const p = withTimeout(neverResolves, 100, 'Request timed out')
-      vi.advanceTimersByTime(150)
-      await expect(p).rejects.toThrow('Request timed out')
     })
   })
 
   // ── sendViaWebSocket ──
 
   describe('sendViaWebSocket()', () => {
-    // For these tests, we need the actual sendViaWebSocket but with mocked hexclawWS
-    // The global mock of chatService makes these functions stubs.
-    // We use vi.importActual to get the real implementation.
-
-    async function getRealSendViaWebSocket() {
-      const mod = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-      return mod.sendViaWebSocket
-    }
-
     it.skip('first reply timeout (120s) triggers rejection', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-      // Advance past 120s timeout
-      vi.advanceTimersByTime(121_000)
-
-      await expect(p).rejects.toThrow('timed out')
     })
 
     it.skip('chunk with done=true -> calls onDone and resolves', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      // Find the chunk callback that was registered
-      const chunkCb = mockHexclawWS.onChunk.mock.calls[mockHexclawWS.onChunk.mock.calls.length - 1]![0] as AnyFn
-      chunkCb({
-        type: 'chunk',
-        content: 'answer text',
-        done: true,
-        metadata: { agent_name: 'test-agent' },
-        tool_calls: [],
-      })
-
-      await p
-      expect(callbacks.onChunk).toHaveBeenCalledWith('answer text', undefined)
-      expect(callbacks.onDone).toHaveBeenCalled()
     })
 
     it.skip('reply message -> calls onDone and resolves', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      const replyCb = mockHexclawWS.onReply.mock.calls[mockHexclawWS.onReply.mock.calls.length - 1]![0] as AnyFn
-      replyCb({
-        type: 'reply',
-        content: 'full reply',
-        metadata: {},
-        tool_calls: [],
-      })
-
-      await p
-      expect(callbacks.onDone).toHaveBeenCalledWith('full reply', expect.anything(), expect.anything(), undefined)
     })
 
     it.skip('error message -> rejects with ChatRequestError(noFallback=true)', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      const errorCb = mockHexclawWS.onError.mock.calls[mockHexclawWS.onError.mock.calls.length - 1]![0] as AnyFn
-      errorCb('Backend processing error')
-
-      let caught: unknown = null
-      try {
-        await p
-      } catch (e: unknown) {
-        caught = e
-      }
-      expect(caught).not.toBeNull()
-      expect((caught as { message: string }).message).toContain('Backend processing error')
-      expect((caught as { noFallback: boolean }).noFallback).toBe(true)
     })
 
     it.skip('user cancel error "用户取消" -> resolves (not error)', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      const errorCb = mockHexclawWS.onError.mock.calls[mockHexclawWS.onError.mock.calls.length - 1]![0] as AnyFn
-      errorCb('用户取消')
-
-      // Should resolve, not reject
-      await expect(p).resolves.toBeUndefined()
     })
 
     it.skip('inactivity timeout after first chunk', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      // Send first chunk (not done) — this clears first-reply timer and starts inactivity timer
-      const chunkCb = mockHexclawWS.onChunk.mock.calls[mockHexclawWS.onChunk.mock.calls.length - 1]![0] as AnyFn
-      chunkCb({ type: 'chunk', content: 'partial', done: false })
-
-      // Advance past inactivity timeout (120s)
-      vi.advanceTimersByTime(121_000)
-
-      await expect(p).rejects.toThrow('stalled')
     })
 
     it.skip('markActivity resets inactivity timer', async () => {
     // [REMOVED: references deleted chatService exports]
-      const sendViaWebSocket = await getRealSendViaWebSocket()
-      const callbacks = { onChunk: vi.fn(), onDone: vi.fn(), onError: vi.fn() }
-
-      const p = sendViaWebSocket('hello', 's1', {}, '', undefined, callbacks)
-
-      const chunkCb = mockHexclawWS.onChunk.mock.calls[mockHexclawWS.onChunk.mock.calls.length - 1]![0] as AnyFn
-
-      // First chunk starts inactivity timer
-      chunkCb({ type: 'chunk', content: 'a', done: false })
-      // After 100s, send another chunk — resets timer
-      vi.advanceTimersByTime(100_000)
-      chunkCb({ type: 'chunk', content: 'b', done: false })
-      // After another 100s (total 200s), still no timeout because reset
-      vi.advanceTimersByTime(100_000)
-      chunkCb({ type: 'chunk', content: 'c', done: true, metadata: {} })
-
-      await expect(p).resolves.toBeUndefined()
     })
   })
 
@@ -1154,22 +1030,10 @@ describe('Chat Service', () => {
   describe('ensureWebSocketConnected()', () => {
     it.skip('already connected -> returns true', async () => {
     // [REMOVED: references deleted chatService exports]
-      const { ensureWebSocketConnected } = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-      mockHexclawWS.isConnected.mockReturnValue(true)
-
-      const result = await ensureWebSocketConnected()
-      expect(result).toBe(true)
-      expect(mockHexclawWS.connect).not.toHaveBeenCalled()
     })
 
     it.skip('connect fails -> returns false', async () => {
     // [REMOVED: references deleted chatService exports]
-      const { ensureWebSocketConnected } = await vi.importActual<typeof import('@/services/chatService')>('@/services/chatService')
-      mockHexclawWS.isConnected.mockReturnValue(false)
-      mockHexclawWS.connect.mockRejectedValueOnce(new Error('refused'))
-
-      const result = await ensureWebSocketConnected()
-      expect(result).toBe(false)
     })
   })
 })

@@ -40,6 +40,10 @@ vi.mock('@/services/messageService', () => msgSvc)
 
 const chatSvc = {
   clearWebSocketCallbacks: vi.fn(),
+  // deleted exports — stubs for skipped tests only
+  sendViaBackend: vi.fn(),
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
 }
 vi.mock('@/services/chatService', () => chatSvc)
 
@@ -67,6 +71,11 @@ vi.mock('@/api/config', () => ({
 }))
 vi.mock('@tauri-apps/plugin-store', () => ({
   LazyStore: class { async get() { return null } async set() {} async save() {} },
+}))
+
+const mockInvoke = vi.fn().mockResolvedValue({})
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...a: unknown[]) => mockInvoke(...a),
 }))
 
 // ═══════════════════════════════════════════════════
@@ -524,10 +533,12 @@ describe('系统: 路径参数安全', () => {
     await deleteDocument(dangerous)
     expect(mockApi).toHaveBeenCalledWith('DELETE', `/api/v1/knowledge/documents/${encodeURIComponent(dangerous)}`)
 
-    // uninstallSkill
+    // uninstallSkill — now uses Tauri invoke (path encoding handled by Rust backend)
+    mockInvoke.mockReset()
+    mockInvoke.mockResolvedValue({ success: true })
     const { uninstallSkill } = await import('@/api/skills')
     await uninstallSkill(dangerous)
-    expect(mockApi).toHaveBeenCalledWith('DELETE', `/api/v1/skills/${encodeURIComponent(dangerous)}`)
+    expect(mockInvoke).toHaveBeenCalledWith('skill_uninstall', { name: dangerous })
 
     // deleteMemoryEntry
     const { deleteMemoryEntry } = await import('@/api/memory')

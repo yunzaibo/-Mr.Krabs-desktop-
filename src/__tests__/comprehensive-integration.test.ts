@@ -32,6 +32,11 @@ const {
   // chatService mocks
   resumeWebSocketStream,
   clearWebSocketCallbacks,
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected,
+  openWebSocketStream,
+  sendViaBackend,
+  sendViaWebSocket,
   // api/chat
   updateMessageFeedback,
   // api/knowledge
@@ -65,6 +70,12 @@ const {
       done: Promise.resolve({ content: 'resumed reply' }),
     })),
     clearWebSocketCallbacks: vi.fn(),
+
+    // deleted chatService exports — stubs for skipped tests only
+    ensureWebSocketConnected: vi.fn(),
+    openWebSocketStream: vi.fn(),
+    sendViaBackend: vi.fn(),
+    sendViaWebSocket: vi.fn(),
 
     updateMessageFeedback: vi.fn().mockResolvedValue({ message: 'ok' }),
 
@@ -107,6 +118,10 @@ vi.mock('@/services/messageService', () => ({
 vi.mock('@/services/chatService', () => ({
   resumeWebSocketStream,
   clearWebSocketCallbacks,
+  // deleted exports — stubs for skipped tests only
+  openWebSocketStream: vi.fn(),
+  ensureWebSocketConnected: vi.fn(),
+  sendViaBackend: vi.fn(),
 }))
 
 vi.mock('@/api/chat', () => ({
@@ -383,59 +398,11 @@ describe('Scenario 2: WebSocket disconnect -> HTTP fallback', () => {
   })
 
   it.skip('falls back to HTTP when WebSocket send throws a retryable error', async () => {
-  // [REMOVED: references deleted chatService exports]
-    ensureWebSocketConnected.mockResolvedValue(true)
-
-    // Import ChatRequestError through the mock module
-    const { ChatRequestError } = await import('@/services/chatService')
-    openWebSocketStream.mockImplementation(() => ({
-      cancel: vi.fn(),
-      done: Promise.reject(new ChatRequestError('WS send failed', false)),
-    }))
-    sendViaBackend.mockResolvedValue({
-      reply: 'Fallback after WS error',
-      session_id: 's1',
-    })
-
-    const { useChatStore } = await import('@/stores/chat')
-    const store = useChatStore()
-
-    const result = await store.sendMessage('Try WS then fallback')
-
-    // WS was attempted first
-    expect(openWebSocketStream).toHaveBeenCalled()
-    // HTTP fallback was triggered
-    expect(sendViaBackend).toHaveBeenCalled()
-
-    expect(result?.content).toBe('Fallback after WS error')
-    expect(store.streaming).toBe(false)
+  // [REMOVED: references deleted ChatRequestError export]
   })
 
   it.skip('does NOT fall back when ChatRequestError has noFallback=true', async () => {
-  // [REMOVED: references deleted chatService exports]
-    ensureWebSocketConnected.mockResolvedValue(true)
-
-    const { ChatRequestError } = await import('@/services/chatService')
-    openWebSocketStream.mockImplementation(() => ({
-      cancel: vi.fn(),
-      done: Promise.reject(new ChatRequestError('Backend error from WS', true)),
-    }))
-
-    const { useChatStore } = await import('@/stores/chat')
-    const store = useChatStore()
-
-    const result = await store.sendMessage('Should not fallback')
-
-    expect(openWebSocketStream).toHaveBeenCalled()
-    // sendViaBackend should NOT be called because noFallback=true
-    expect(sendViaBackend).not.toHaveBeenCalled()
-
-    // Error is captured and an error message is added
-    expect(result).toBeNull()
-    expect(store.error).not.toBeNull()
-    // Error message added as assistant message
-    const lastMsg = store.messages[store.messages.length - 1]
-    expect(lastMsg?.role).toBe('assistant')
+  // [REMOVED: references deleted ChatRequestError export]
   })
 })
 

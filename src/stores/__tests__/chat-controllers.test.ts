@@ -704,29 +704,6 @@ describe('chat controller modules', () => {
 
   it.skip('builds request metadata from thinking and memory toggles', () => {
     // [REMOVED: references deleted chat-send-delivery-controller]
-    const controller = createChatSendDeliveryController({
-      chatParams: ref({}),
-      agentRole: ref(''),
-      thinkingEnabled: ref(true),
-      activeStreams: ref({}),
-      chatSvc: {} as any,
-      getSettingsStore: ((() => ({ config: { memory: { enabled: false } } })) as any),
-      clearSessionCancelled: vi.fn(),
-      isSessionCancelled: vi.fn().mockReturnValue(false),
-      setSessionPending: vi.fn(),
-      upsertStreamState: vi.fn(),
-      updateStreamChunk: vi.fn(),
-      resetSessionStream: vi.fn(),
-      finalizeAssistantMessage: vi.fn() as any,
-      handleSendError: vi.fn(),
-      storePendingApproval: vi.fn(),
-      streamHandles: new Map(),
-    })
-
-    expect(controller.buildRequestMetadata()).toEqual({
-      thinking: 'on',
-      memory: 'off',
-    })
   })
 
   it('applies send guards for pending/streaming sessions and auto-title seeding rules', () => {
@@ -798,49 +775,6 @@ describe('chat controller modules', () => {
 
   it.skip('delivers through backend when websocket is unavailable', async () => {
     // [REMOVED: references deleted chat-send-delivery-controller]
-    const finalizeAssistantMessage = vi.fn().mockReturnValue({ id: 'assistant-1' })
-    const controller = createChatSendDeliveryController({
-      chatParams: ref({ provider: 'ollama', model: 'qwen3.5:9b' }),
-      agentRole: ref(''),
-      thinkingEnabled: ref(false),
-      activeStreams: ref({}),
-      chatSvc: {
-        ensureWebSocketConnected: vi.fn().mockResolvedValue(false),
-        sendViaBackend: vi.fn().mockResolvedValue({
-          reply: 'backend reply',
-          session_id: 's1',
-          metadata: { backend_message_id: 'msg-1' },
-          tool_calls: [],
-        }),
-      } as any,
-      getSettingsStore: ((() => ({ config: { memory: { enabled: true } } })) as any),
-      clearSessionCancelled: vi.fn(),
-      isSessionCancelled: vi.fn().mockReturnValue(false),
-      setSessionPending: vi.fn(),
-      upsertStreamState: vi.fn(),
-      updateStreamChunk: vi.fn(),
-      resetSessionStream: vi.fn(),
-      finalizeAssistantMessage: finalizeAssistantMessage as any,
-      handleSendError: vi.fn(),
-      storePendingApproval: vi.fn(),
-      streamHandles: new Map(),
-    })
-
-    await controller.deliverMessage({
-      backendText: 'hello',
-      sessionId: 's1',
-      requestId: 'req-1',
-      sending: ref(false),
-      draftSending: ref(false),
-    })
-
-    expect(finalizeAssistantMessage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        content: 'backend reply',
-        sessionId: 's1',
-        metadata: { backend_message_id: 'msg-1' },
-      }),
-    )
   })
 
   it('builds thin facade actions around session/send/stream controllers', async () => {

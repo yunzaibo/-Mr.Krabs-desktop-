@@ -16,6 +16,12 @@ vi.mock('ofetch', () => ({
   },
 }))
 
+// ─── Tauri IPC mock (for skills invoke calls) ─────────
+const mockInvoke = vi.hoisted(() => vi.fn())
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: mockInvoke,
+}))
+
 // ─── helpers ───────────────────────────────────────────
 
 /** Extracts the call args for the Nth invocation (0-based). */
@@ -28,6 +34,7 @@ function callArgs(n: number): [string, Record<string, unknown>] {
 beforeEach(() => {
   vi.resetModules()
   mockFetch.mockReset()
+  mockInvoke.mockReset()
 })
 
 // =========================================================
@@ -244,10 +251,14 @@ describe('Chain 5: Task / Cron Lifecycle', () => {
 // =========================================================
 describe('Chain 6: Skill Lifecycle', () => {
   it('getSkills → searchClawHub → installFromHub → setSkillEnabled(true) → setSkillEnabled(false) → uninstallSkill', async () => {
+    // getSkills uses apiGet (via ofetch transport)
     mockFetch
-      .mockResolvedValueOnce({ skills: [{ name: 'code-review-pro' }], total: 1, dir: '/skills' }) // getSkills
-      .mockResolvedValueOnce({                                                                      // searchClawHub
-        skills: [{
+      .mockResolvedValueOnce({ skills: [{ name: 'code-review-pro' }], total: 1, dir: '/skills' })
+
+    // searchClawHub, installFromHub, setSkillEnabled, uninstallSkill use invoke
+    mockInvoke
+      .mockResolvedValueOnce([                                                                  // searchClawHub
+        {
           name: 'code-review-pro',
           description: 'Code review',
           author: 'openclaw',
@@ -255,12 +266,12 @@ describe('Chain 6: Skill Lifecycle', () => {
           tags: ['code-review'],
           downloads: 28430,
           category: 'coding',
-        }],
-      })
-      .mockResolvedValueOnce({ name: 'code-review-pro', description: 'ok', version: '2.1.0', message: 'installed' }) // installFromHub
-      .mockResolvedValueOnce({ enabled: true, effective_enabled: true, requires_restart: false })                      // setSkillEnabled(true)
-      .mockResolvedValueOnce({ enabled: false, effective_enabled: false, requires_restart: false })                    // setSkillEnabled(false)
-      .mockResolvedValueOnce({ message: 'uninstalled' })                                                               // uninstallSkill
+        },
+      ])
+      .mockResolvedValueOnce({ success: true, name: 'code-review-pro', message: 'installed' })  // installFromHub
+      .mockResolvedValueOnce({ success: true, enabled: true, effective_enabled: true, requires_restart: false })  // setSkillEnabled(true)
+      .mockResolvedValueOnce({ success: true, enabled: false, effective_enabled: false, requires_restart: false }) // setSkillEnabled(false)
+      .mockResolvedValueOnce({ success: true, message: 'uninstalled' })                          // uninstallSkill
 
     const { getSkills, searchClawHub, installFromHub, setSkillEnabled, uninstallSkill } =
       await import('../skills')
@@ -273,54 +284,55 @@ describe('Chain 6: Skill Lifecycle', () => {
     const disableRes = await setSkillEnabled('code-review-pro', false)
     await uninstallSkill('code-review-pro')
 
-    expect(mockFetch).toHaveBeenCalledTimes(6)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockInvoke).toHaveBeenCalledTimes(5)
 
-    // 1) getSkills → GET /api/v1/skills
+    // 1) getSkills → GET /api/v1/skills (via ofetch)
     const [skillsPath, skillsOpts] = callArgs(0)
     expect(skillsPath).toBe('/api/v1/skills')
     expect(skillsOpts.method).toBe('GET')
     expect(skills.total).toBe(1)
 
-    // 2) searchClawHub → GET /api/v1/clawhub/search with query params
-    const [hubPath, hubOpts] = callArgs(1)
-    expect(hubPath).toBe('/api/v1/clawhub/search')
-    expect(hubOpts.method).toBe('GET')
-    expect(hubOpts.query).toEqual({ q: 'code-review', category: 'coding', type: 'skill' })
+    // 2) searchClawHub → invoke('skill_search', ...)
+    expect(mockInvoke).toHaveBeenNthCalledWith(1, 'skill_search', {
+      query: 'code-review',
+      category: 'coding',
+    })
     expect(hubResults).toHaveLength(1)
     expect(hubResults[0]!.name).toBe('code-review-pro')
 
-    // 3) installFromHub → POST /api/v1/skills/install
-    const [installPath, installOpts] = callArgs(2)
-    expect(installPath).toBe('/api/v1/skills/install')
-    expect(installOpts.method).toBe('POST')
-    expect(installOpts.body).toEqual({ source: 'clawhub://code-review-pro' })
+    // 3) installFromHub → invoke('skill_install', ...)
+    expect(mockInvoke).toHaveBeenNthCalledWith(2, 'skill_install', {
+      source: 'clawhub://code-review-pro',
+      skillType: 'clawhub',
+    })
 
-    // 4) setSkillEnabled(true) → PUT /api/v1/skills/:name/status
-    const [enablePath, enableOpts] = callArgs(3)
-    expect(enablePath).toBe('/api/v1/skills/code-review-pro/status')
-    expect(enableOpts.method).toBe('PUT')
-    expect(enableOpts.body).toEqual({ enabled: true })
+    // 4) setSkillEnabled(true) → invoke('skill_set_enabled', ...)
+    expect(mockInvoke).toHaveBeenNthCalledWith(3, 'skill_set_enabled', {
+      name: 'code-review-pro',
+      enabled: true,
+    })
     expect(enableRes.success).toBe(true)
     expect(enableRes.enabled).toBe(true)
     expect(enableRes.source).toBe('backend')
 
-    // 5) setSkillEnabled(false) → PUT /api/v1/skills/:name/status
-    const [disablePath, disableOpts] = callArgs(4)
-    expect(disablePath).toBe('/api/v1/skills/code-review-pro/status')
-    expect(disableOpts.method).toBe('PUT')
-    expect(disableOpts.body).toEqual({ enabled: false })
+    // 5) setSkillEnabled(false) → invoke('skill_set_enabled', ...)
+    expect(mockInvoke).toHaveBeenNthCalledWith(4, 'skill_set_enabled', {
+      name: 'code-review-pro',
+      enabled: false,
+    })
     expect(disableRes.success).toBe(true)
     expect(disableRes.enabled).toBe(false)
     expect(disableRes.source).toBe('backend')
 
-    // 6) uninstallSkill → DELETE /api/v1/skills/:name
-    const [uninstallPath, uninstallOpts] = callArgs(5)
-    expect(uninstallPath).toBe('/api/v1/skills/code-review-pro')
-    expect(uninstallOpts.method).toBe('DELETE')
+    // 6) uninstallSkill → invoke('skill_uninstall', ...)
+    expect(mockInvoke).toHaveBeenNthCalledWith(5, 'skill_uninstall', {
+      name: 'code-review-pro',
+    })
   })
 
   it('setSkillEnabled falls back to local-fallback on network error', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network Error'))
+    mockInvoke.mockRejectedValueOnce(new Error('Network Error'))
 
     const { setSkillEnabled } = await import('../skills')
     const result = await setSkillEnabled('broken-skill', true)
@@ -332,18 +344,20 @@ describe('Chain 6: Skill Lifecycle', () => {
     expect(result.message).toBe('Network Error')
   })
 
-  it('searchClawHub with no filters builds correct URL', async () => {
-    mockFetch.mockResolvedValueOnce({ skills: [] })
+  it('searchClawHub with no filters calls invoke correctly', async () => {
+    mockInvoke.mockResolvedValueOnce([])
 
     const { searchClawHub } = await import('../skills')
     await searchClawHub()
 
-    const [path] = callArgs(0)
-    expect(path).toBe('/api/v1/clawhub/search')
+    expect(mockInvoke).toHaveBeenCalledWith('skill_search', {
+      query: undefined,
+      category: undefined,
+    })
   })
 
-  it('searchClawHub propagates server error string', async () => {
-    mockFetch.mockResolvedValueOnce({ error: 'hub unavailable' })
+  it('searchClawHub propagates invoke error', async () => {
+    mockInvoke.mockRejectedValueOnce(new Error('hub unavailable'))
 
     const { searchClawHub } = await import('../skills')
     await expect(searchClawHub('test')).rejects.toThrow('hub unavailable')

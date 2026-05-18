@@ -78,6 +78,7 @@ vi.mock('@/services/messageService', () => ({
   parseMessageMetadata: vi.fn(),
   normalizeLoadedMessage: vi.fn(),
   serializeMessageMetadata: vi.fn(),
+  suggestSessionTitle: vi.fn().mockResolvedValue({ updated: false }),
 }))
 
 vi.mock('@/services/chatService', () => ({
@@ -148,6 +149,15 @@ vi.mock('@tauri-apps/plugin-store', () => {
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn().mockResolvedValue('{}'),
+}))
+
+vi.mock('@/services/runtimeBridge', () => ({
+  registerChatTask: vi.fn(),
+  executeChatTask: vi.fn().mockResolvedValue({ kind: 'text', content: 'mock assistant reply' }),
+}))
+
+vi.mock('@/services/skillBridge', () => ({
+  tryExecuteSkill: vi.fn().mockResolvedValue(undefined),
 }))
 
 // ── Setup ──────────────────────────────────────────────────────────

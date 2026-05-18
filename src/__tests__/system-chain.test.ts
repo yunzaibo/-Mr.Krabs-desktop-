@@ -29,6 +29,10 @@ const {
   setLastSessionId,
   // chatService mocks
   clearWebSocketCallbacks,
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected,
+  openWebSocketStream,
+  sendViaBackend,
   // api/chat
   updateMessageFeedback,
   // api/knowledge
@@ -85,6 +89,11 @@ const {
   setLastSessionId: vi.fn().mockResolvedValue(undefined),
 
   clearWebSocketCallbacks: vi.fn(),
+
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
+  sendViaBackend: vi.fn(),
 
   updateMessageFeedback: vi.fn().mockResolvedValue({ message: 'ok' }),
 
@@ -157,6 +166,10 @@ vi.mock('@/services/messageService', () => ({
 
 vi.mock('@/services/chatService', () => ({
   clearWebSocketCallbacks,
+  // deleted exports — stubs for skipped tests only
+  sendViaBackend: vi.fn(),
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
 }))
 
 vi.mock('@/api/chat', () => ({
@@ -782,24 +795,7 @@ describe('Chain 5: WebSocket Lifecycle', () => {
   })
 
   it.skip('WebSocket noFallback error does NOT fall back to HTTP', async () => {
-  // [REMOVED: references deleted chatService exports]
-    ensureWebSocketConnected.mockResolvedValue(true)
-
-    const { ChatRequestError } = await import('@/services/chatService')
-    openWebSocketStream.mockReturnValueOnce({
-      cancel: vi.fn(),
-      done: Promise.reject(new ChatRequestError('助手长时间未开始回复，已超时并停止等待。', true)),
-    })
-
-    const { useChatStore } = await import('@/stores/chat')
-    const store = useChatStore()
-
-    await store.sendMessage('timeout test')
-
-    expect(sendViaBackend).not.toHaveBeenCalled()
-    // Error message should be in the messages
-    const lastMsg = store.messages[store.messages.length - 1]
-    expect(lastMsg?.content).toContain('超时')
+  // [REMOVED: references deleted ChatRequestError export]
   })
 
   it('hexclawWS module: sendMessage when not connected triggers error callback', async () => {

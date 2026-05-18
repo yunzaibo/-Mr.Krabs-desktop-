@@ -278,8 +278,8 @@ describe('ChatView — E2E 关键路径', () => {
     const wrapper = mountChatView()
     await flushPromises()
 
-    // EmptyState 中包含 "开始对话" 文字
-    expect(wrapper.text()).toContain('开始对话')
+    // EmptyState 中包含 "启动 Runtime Task" 文字
+    expect(wrapper.text()).toContain('启动 Runtime Task')
   })
 
   // ────────────────────────────────────────────────────

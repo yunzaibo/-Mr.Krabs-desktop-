@@ -27,6 +27,10 @@ const {
   getLastSessionId,
   setLastSessionId,
   clearWebSocketCallbacks,
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected,
+  openWebSocketStream,
+  sendViaBackend,
   mockApiSaveWorkflow,
   mockApiGetWorkflows,
   mockApiDeleteWorkflow,
@@ -47,6 +51,10 @@ const {
   getLastSessionId: vi.fn().mockReturnValue(null),
   setLastSessionId: vi.fn(),
   clearWebSocketCallbacks: vi.fn(),
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
+  sendViaBackend: vi.fn(),
   mockApiSaveWorkflow: vi.fn(),
   mockApiGetWorkflows: vi.fn().mockResolvedValue([]),
   mockApiDeleteWorkflow: vi.fn().mockResolvedValue(undefined),
@@ -106,6 +114,10 @@ vi.mock('@/services/messageService', () => ({
 
 vi.mock('@/services/chatService', () => ({
   clearWebSocketCallbacks,
+  // deleted exports — stubs for skipped tests only
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
+  sendViaBackend: vi.fn(),
 }))
 
 vi.mock('@/api/chat', () => ({

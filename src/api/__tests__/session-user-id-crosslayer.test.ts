@@ -147,44 +147,14 @@ describe('chatService 层: sendViaBackend user_id', () => {
 
   it.skip('sendViaBackend 完整参数传递 user_id', async () => {
   // [REMOVED: references deleted chatService exports]
-    const chatSvc = await import('@/services/chatService')
-    await chatSvc.sendViaBackend(
-      '写一个函数',
-      'svc-sess-1',
-      { model: 'glm-4', provider: '智谱', temperature: 0.7, maxTokens: 4096 },
-      'coder',
-    )
-
-    const params = invoke.mock.calls[0]![1].params
-    expect(params.user_id).toBe(EXPECTED_USER_ID)
-    expect(params.session_id).toBe('svc-sess-1')
-    expect(params.role).toBe('coder')
-    expect(params.model).toBe('glm-4')
-    expect(params.provider).toBe('智谱')
   })
 
   it.skip('sendViaBackend 空 agentRole → user_id 仍存在', async () => {
   // [REMOVED: references deleted chatService exports]
-    const chatSvc = await import('@/services/chatService')
-    await chatSvc.sendViaBackend('普通聊天', 'normal-sess', { model: 'gpt-4' }, '')
-
-    const params = invoke.mock.calls[0]![1].params
-    expect(params.user_id).toBe(EXPECTED_USER_ID)
-    expect(params.role).toBeFalsy() // chatService 传 undefined → sendChatViaBackend 转为 null
   })
 
   it.skip('sendViaBackend 带附件 → user_id 仍存在', async () => {
   // [REMOVED: references deleted chatService exports]
-    const chatSvc = await import('@/services/chatService')
-    const attachments = [{ type: 'image', name: 'test.png', mime: 'image/png', data: 'base64...' }]
-    await chatSvc.sendViaBackend(
-      '描述这张图片', 'attach-sess', {}, '',
-      attachments as import('@/types').ChatAttachment[],
-    )
-
-    const params = invoke.mock.calls[0]![1].params
-    expect(params.user_id).toBe(EXPECTED_USER_ID)
-    expect(params.attachments).toHaveLength(1)
   })
 })
 

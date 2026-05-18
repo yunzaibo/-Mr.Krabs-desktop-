@@ -273,10 +273,10 @@ describe('Skill API alignment: types/skill.ts vs handler_misc.go', () => {
 
   it('installSkill sends correct request body', () => {
     const skillsSource = readFrontendFile('skills.ts')
-    // Frontend: { source, type }
-    expect(skillsSource).toContain("{ source, type }")
+    // Frontend: invoke('skill_install', { source, skillType: type })
+    expect(skillsSource).toContain('skillType')
     // Backend InstallSkillRequest: Source string `json:"source"`, Type string `json:"type"`
-    // ALIGNED
+    // ALIGNED (frontend maps type → skillType for Tauri command)
   })
 })
 
@@ -723,10 +723,17 @@ describe('ClawHub alignment: skills.ts vs handler_extended.go + hub.SkillMeta', 
     //   name, display_name?, description, author, version, tags, downloads,
     //   rating?, category, _mock?
     //
-    // Frontend MISSING: type, dependencies, url, command, args, config_hint
+    // Frontend ClawHubSkill MISSING: type, dependencies, url, command, args, config_hint
     // These are important for MCP type skills that need command/args for installation
+    //
+    // Note: SkillPackageMeta (separate interface) now covers dependencies,
+    // but ClawHubSkill itself still lacks these fields
     const skillTypes = readFrontendType('skill.ts')
-    expect(skillTypes).not.toContain('dependencies')
+    const clawHubBlock = skillTypes.slice(
+      skillTypes.indexOf('export interface ClawHubSkill {'),
+      skillTypes.indexOf('}', skillTypes.indexOf('_mock?: boolean')) + 1,
+    )
+    expect(clawHubBlock).not.toContain('dependencies')
     // Note: url, command, args ARE present in McpMarketplaceEntry (mcp.ts)
     // but NOT in ClawHubSkill (skill.ts)
   })

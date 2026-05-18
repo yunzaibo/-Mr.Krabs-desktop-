@@ -21,6 +21,10 @@ const {
   // chatService (only recovery + cleanup exports remain)
   resumeWebSocketStream,
   clearWebSocketCallbacks,
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected,
+  openWebSocketStream,
+  sendViaBackend,
   // api/chat
   updateMessageFeedback,
   listActiveStreams,
@@ -52,6 +56,11 @@ const {
     done: Promise.resolve({ content: '恢复完成' }),
   })),
   clearWebSocketCallbacks: vi.fn(),
+
+  // deleted chatService exports — stubs for skipped tests only
+  ensureWebSocketConnected: vi.fn(),
+  openWebSocketStream: vi.fn(),
+  sendViaBackend: vi.fn(),
 
   updateMessageFeedback: vi.fn().mockResolvedValue({ message: 'ok' }),
   listActiveStreams: vi.fn().mockResolvedValue({ streams: [], total: 0 }),
@@ -733,23 +742,7 @@ describe('useChatStore', () => {
   })
 
   it.skip('times out stalled websocket requests without falling back to backend' /* TODO: retest via Runtime path */, async () => {
-    vi.useFakeTimers()
-    ensureWebSocketConnected.mockResolvedValue(true)
-    const store = useChatStore()
-
-    const { ChatRequestError } = await import('@/services/chatService')
-    openWebSocketStream.mockImplementationOnce(() => ({
-      cancel: vi.fn(),
-      done: Promise.reject(new ChatRequestError('助手长时间未开始回复，已超时并停止等待。', true)),
-    }))
-
-    await store.sendMessage('卡住的请求')
-
-    expect(sendViaBackend).not.toHaveBeenCalled()
-    expect(store.streaming).toBe(false)
-    expect(store.messages[store.messages.length - 1]?.content).toContain('超时')
-
-    vi.useRealTimers()
+  // [REMOVED: references deleted ChatRequestError export]
   })
 
   it.skip('sends thinking metadata when thinkingEnabled is on' /* TODO: retest via Runtime path */, async () => {

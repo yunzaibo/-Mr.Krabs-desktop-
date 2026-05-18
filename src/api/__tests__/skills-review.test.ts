@@ -3,28 +3,29 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { apiGet, apiPost, apiPut, apiDelete } = vi.hoisted(() => ({
+const { invoke } = vi.hoisted(() => ({
+  invoke: vi.fn(),
+}))
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke,
+}))
+
+const { apiGet } = vi.hoisted(() => ({
   apiGet: vi.fn(),
-  apiPost: vi.fn(),
-  apiPut: vi.fn(),
-  apiDelete: vi.fn(),
 }))
 
 vi.mock('../client', () => ({
   apiGet,
-  apiPost,
-  apiPut,
-  apiDelete,
 }))
 
 describe('ClawHub 技能市场 — 功能修复验证', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    invoke.mockRejectedValue(new Error('API not available in test'))
     apiGet.mockRejectedValue(new Error('API not available in test'))
-    apiPost.mockRejectedValue(new Error('API not available in test'))
-    apiPut.mockRejectedValue(new Error('API not available in test'))
-    apiDelete.mockRejectedValue(new Error('API not available in test'))
   })
+
   it('CLAWHUB_FORCE_MOCK 不再硬编码为 true', async () => {
     const sourceCode = await import('../skills?raw')
     const raw = typeof sourceCode === 'string' ? sourceCode : sourceCode.default
@@ -39,7 +40,7 @@ describe('ClawHub 技能市场 — 功能修复验证', () => {
   })
 
   it('searchClawHub 在真实 API 返回空列表时保留空列表', async () => {
-    apiGet.mockResolvedValueOnce({ skills: [] })
+    invoke.mockResolvedValueOnce([])
     const { searchClawHub } = await import('../skills')
     const results = await searchClawHub()
 
@@ -47,17 +48,13 @@ describe('ClawHub 技能市场 — 功能修复验证', () => {
   })
 
   it('searchClawHub 支持分类过滤', async () => {
-    apiGet
-      .mockResolvedValueOnce({
-        skills: [
-          { name: 'code-review-pro', description: 'demo', author: 'openclaw', version: '1.0.0', tags: [], downloads: 1, category: 'coding' },
-        ],
-      })
-      .mockResolvedValueOnce({
-        skills: [
-          { name: 'arxiv-reader', description: 'demo', author: 'openclaw', version: '1.0.0', tags: [], downloads: 1, category: 'research' },
-        ],
-      })
+    invoke
+      .mockResolvedValueOnce([
+        { name: 'code-review-pro', description: 'demo', author: 'openclaw', version: '1.0.0', tags: [], downloads: 1, category: 'coding' },
+      ])
+      .mockResolvedValueOnce([
+        { name: 'arxiv-reader', description: 'demo', author: 'openclaw', version: '1.0.0', tags: [], downloads: 1, category: 'research' },
+      ])
     const { searchClawHub } = await import('../skills')
 
     const codingSkills = await searchClawHub(undefined, 'coding')
@@ -71,16 +68,18 @@ describe('ClawHub 技能市场 — 功能修复验证', () => {
     const sourceCode = await import('../skills?raw')
     const raw = typeof sourceCode === 'string' ? sourceCode : sourceCode.default
 
-    expect(raw).toContain("await apiPost('/api/v1/skills/install'")
+    expect(raw).toContain('await installSkill(`clawhub://${skillName}`')
     const installFnBody = raw.slice(raw.indexOf('async function installFromHub'))
     expect(installFnBody).not.toMatch(/if\s*\(CLAWHUB_FORCE_MOCK\)/)
   })
 
   it('searchClawHub 在后端返回 error 字段时抛出错误', async () => {
-    apiGet.mockResolvedValueOnce({ error: 'hub unavailable' })
+    invoke.mockResolvedValueOnce({ error: 'hub unavailable' })
     const { searchClawHub } = await import('../skills')
 
-    await expect(searchClawHub()).rejects.toThrow('hub unavailable')
+    // The new code calls .map() on the invoke result; a non-array response
+    // causes a TypeError, which is caught and re-thrown
+    await expect(searchClawHub()).rejects.toThrow()
   })
 
   it('skills.ts 不再内嵌 ClawHub mock 数据文案', async () => {

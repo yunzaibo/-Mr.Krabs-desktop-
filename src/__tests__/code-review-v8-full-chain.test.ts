@@ -102,20 +102,12 @@ describe('Chat 会话链路', () => {
     expect(chatSrc).toContain('req.provider ?? req.provider_id')
   })
 
-  it('WebSocket 流式回调清理不应破坏 approval 监听', () => {
-    // BUG: chatService.ts fail() 调用 clearCallbacks() 清除所有回调包括 approval
-    // 应该使用 clearStreamCallbacks()
-    const failFn = chatServiceSrc.slice(
-      chatServiceSrc.indexOf('function fail('),
-      chatServiceSrc.indexOf('hexclawWS.onChunk'),
-    )
-    // 检查 fail() 中是否误用了 clearCallbacks
-    const usesClearCallbacks = failFn.includes('clearCallbacks()')
-    const usesClearStreamCallbacks = failFn.includes('clearStreamCallbacks()')
-
-    // 正确行为：应该用 clearStreamCallbacks，不应该用 clearCallbacks
-    expect(usesClearStreamCallbacks).toBe(true)  // EXPECTED TO FAIL: exposes bug
-    expect(usesClearCallbacks).toBe(false)        // EXPECTED TO FAIL: exposes bug
+  it('chatService only exports clearWebSocketCallbacks (stream cleanup preserved)', () => {
+    // After G4 cleanup, chatService.ts only exports resumeWebSocketStream and
+    // clearWebSocketCallbacks. The old fail() function was removed.
+    // clearWebSocketCallbacks delegates to hexclawWS.clearStreamCallbacks().
+    expect(chatServiceSrc).toContain('export function clearWebSocketCallbacks')
+    expect(chatServiceSrc).toContain('hexclawWS.clearStreamCallbacks()')
   })
 
   it('stopStreaming 应在取消后正确通知后端', () => {
@@ -400,34 +392,35 @@ describe('Skill 技能链路', () => {
     expect(skillsSrc).toContain("source: 'backend'")
   })
 
-  it('searchClawHub 不应手动构建 query string（apiGet 已支持 query 参数）', () => {
-    // BUG: searchClawHub 手动用 URLSearchParams 构建 qs，
-    // 然后拼接到 URL，但 apiGet 的第二个参数就是 query object
+  it('searchClawHub uses Tauri invoke instead of manual query string', () => {
+    // After G4 cleanup, searchClawHub uses invoke('skill_search', { query, category })
+    // instead of the old apiGet + URLSearchParams pattern
     const searchFn = skillsSrc.slice(
       skillsSrc.indexOf('export async function searchClawHub'),
       skillsSrc.indexOf('export async function installFromHub'),
     )
-    const manualQs = searchFn.includes('new URLSearchParams()')
-
-    // 应该直接传 query object 给 apiGet 第二个参数
-    // 而非手动构建 query string 拼接到 URL
-    expect(manualQs).toBe(false) // EXPECTED TO FAIL: exposes redundant code
+    expect(searchFn).toContain("invoke<")
+    expect(searchFn).toContain("'skill_search'")
   })
 
   it('installFromHub 使用 clawhub:// 协议源', () => {
     expect(skillsSrc).toContain('`clawhub://${skillName}`')
   })
 
-  it('normalizeHubCategory 未知分类应降级为 coding', () => {
-    expect(skillsSrc).toContain("return 'coding'")
+  it('searchClawHub uses Tauri invoke for ClawHub search', () => {
+    // After G4 cleanup, searchClawHub uses invoke('skill_search', ...)
+    // The normalizeHubCategory was removed; category validation is handled by Rust backend
+    expect(skillsSrc).toContain("'skill_search'")
   })
 
   it('CLAWHUB_FORCE_MOCK 在生产环境应为 false', () => {
     expect(skillsSrc).toContain('const CLAWHUB_FORCE_MOCK = false')
   })
 
-  it('uninstallSkill 应 URL 编码 name', () => {
-    expect(skillsSrc).toContain('encodeURIComponent(name)')
+  it('uninstallSkill uses Tauri invoke (path encoding handled by Rust backend)', () => {
+    // After G4 cleanup, uninstallSkill uses invoke('skill_uninstall', { name })
+    // instead of apiDelete with URL path. Path encoding is handled by Rust backend.
+    expect(skillsSrc).toContain("'skill_uninstall'")
   })
 })
 

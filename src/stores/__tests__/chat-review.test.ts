@@ -31,6 +31,7 @@ vi.mock('@/services/messageService', () => ({
   parseMessageMetadata: vi.fn(),
   normalizeLoadedMessage: vi.fn(),
   serializeMessageMetadata: vi.fn(),
+  suggestSessionTitle: vi.fn().mockResolvedValue({ updated: false }),
 }))
 
 let chunkCallback: ((content: string, done: boolean) => void) | null = null
@@ -88,6 +89,15 @@ vi.mock('@/api/messages', () => ({
   updateMessageFeedback: vi.fn().mockResolvedValue({ message: 'ok' }),
 }))
 
+vi.mock('@/services/runtimeBridge', () => ({
+  executeChatTask: vi.fn().mockResolvedValue({ content: 'runtime reply', session_id: 's1' }),
+  registerChatTask: vi.fn(),
+}))
+
+vi.mock('@/services/skillBridge', () => ({
+  tryExecuteSkill: vi.fn().mockResolvedValue(undefined),
+}))
+
 describe('Chat Store — Code Review 暴露问题', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -96,12 +106,10 @@ describe('Chat Store — Code Review 暴露问题', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
-  // ─── 1.1 Promise double-resolve 已修复 ────────────────
-  it('WebSocket onChunk+onReply 同时触发时 settled 守卫阻止重复 finalize', async () => {
+  // ─── 1.1 Runtime 路径单次 finalize ────────────────
+  it('sendMessage 通过 runtimeBridge 只产生一条 assistant 消息', async () => {
     const store = useChatStore()
     await store.sendMessage('test')
-
-    await new Promise((r) => setTimeout(r, 50))
 
     const assistantMessages = store.messages.filter((m) => m.role === 'assistant')
     expect(assistantMessages.length).toBe(1)
@@ -141,24 +149,6 @@ describe('Chat Store — Code Review 暴露问题', () => {
 
   // ─── 会话标题更新边界 ─────────────────────────────────
   it.skip('finalizeAssistantMessage 在 messages.length > 2 时不更新标题', async () => {
-  // [REMOVED: references deleted chatService exports]
-    const store = useChatStore()
-    // 预填充 3 条消息
-    store.messages = [
-      { id: 'm1', role: 'user', content: 'first', timestamp: '' },
-      { id: 'm2', role: 'assistant', content: 'reply', timestamp: '' },
-      { id: 'm3', role: 'user', content: 'second', timestamp: '' },
-    ]
-    store.currentSessionId = 's1'
-
-    const { sendViaBackend } = await import('@/services/chatService')
-    vi.mocked(sendViaBackend).mockResolvedValueOnce({ reply: 'ok' })
-    await store.sendMessage('third message')
-
-    // 等待异步完成
-    await new Promise((r) => setTimeout(r, 50))
-
-    // messages.length > 2 时不应更新标题
-    expect(updateSessionTitle).not.toHaveBeenCalled()
+  // [REMOVED: references deleted chatService exports — test body cleared]
   })
 })

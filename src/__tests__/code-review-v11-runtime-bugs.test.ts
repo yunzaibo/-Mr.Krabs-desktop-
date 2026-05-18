@@ -163,7 +163,8 @@ describe('BUG 6: ensureSession does not push to sessions array', () => {
     const fnEnd = streamCompletionSrc.indexOf('return {')
     const fnBody = streamCompletionSrc.slice(fnStart, fnEnd)
     expect(fnBody).toContain('loadSessions()')
-    expect(facadeSrc).toContain('finalizeAssistantMessage: boundStreamController.finalizeAssistantMessage')
+    // After G4 cleanup, finalizeAssistantMessage is no longer exposed on the chat facade;
+    // it is called internally by the stream completion controller
   })
 })
 
