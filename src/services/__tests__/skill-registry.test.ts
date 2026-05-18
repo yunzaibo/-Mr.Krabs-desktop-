@@ -195,4 +195,37 @@ describe('SkillRegistry', () => {
       expect(registry.size).toBe(2)
     })
   })
+
+  // ── reset ───────────────────────────────────────
+
+  describe('reset', () => {
+    it('clears cache and allows re-discovery', async () => {
+      // Initial load: 1 skill
+      mockReadDir
+        .mockResolvedValueOnce([{ name: 'skill-a', isDirectory: true }])
+        .mockResolvedValueOnce([])
+      mockReadTextFile.mockResolvedValueOnce(makeSkillJson())
+
+      await registry.getAllSkills()
+      expect(registry.size).toBe(1)
+
+      // Reset
+      registry.reset()
+      expect(registry.size).toBe(0)
+
+      // Re-discover: 2 skills (simulating new import)
+      mockReadDir
+        .mockResolvedValueOnce([
+          { name: 'skill-a', isDirectory: true },
+          { name: 'skill-b', isDirectory: true },
+        ])
+        .mockResolvedValueOnce([])
+      mockReadTextFile
+        .mockResolvedValueOnce(makeSkillJson())
+        .mockResolvedValueOnce(makeSkillJson())
+
+      const skills = await registry.getAllSkills()
+      expect(skills).toHaveLength(2)
+    })
+  })
 })

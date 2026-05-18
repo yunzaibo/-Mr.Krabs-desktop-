@@ -60,6 +60,16 @@ function getRegistry(): SkillRegistry {
   return _registry
 }
 
+/**
+ * 重置 SkillRegistry 单例缓存，使新导入的 skill 立即可被发现。
+ * 在目录导入完成后调用。
+ */
+export function resetSkillRegistry(): void {
+  if (_registry) {
+    _registry.reset()
+  }
+}
+
 // ── 正则 ─────────────────────────────────────────
 
 const SKILL_INVOCATION_RE = /^@(\S+)\s*(.*)/

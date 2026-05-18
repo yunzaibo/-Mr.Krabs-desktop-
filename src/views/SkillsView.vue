@@ -32,6 +32,8 @@ import {
 } from '@/api/skills'
 import { open as openFileDialog } from '@tauri-apps/plugin-dialog'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { installSkillFromDirectory } from '@/services/skillDirectoryInstaller'
+import { resetSkillRegistry } from '@/services/skillBridge'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingState from '@/components/common/LoadingState.vue'
 import SearchInput from '@/components/common/SearchInput.vue'
@@ -193,6 +195,14 @@ async function handlePickFile() {
   if (path) doInstall(path, 'file')
 }
 
+async function handlePickDirectory() {
+  const path = await openFileDialog({
+    directory: true,
+    multiple: false,
+  })
+  if (path) handleDirectoryInstall(path)
+}
+
 function handleUrlInstall() {
   const url = installUrl.value.trim()
   if (!url) return
@@ -204,11 +214,42 @@ function handleUrlInstall() {
 }
 
 function handleFileDrop(paths: string[]) {
+  // 优先处理目录
+  const dir = paths.find((p) => !p.toLowerCase().endsWith('.md'))
+  if (dir) {
+    handleDirectoryInstall(dir)
+    return
+  }
+  // 回退到 .md 文件
   const md = paths.find((p) => p.toLowerCase().endsWith('.md'))
   if (md) {
     doInstall(md, 'file')
   } else {
-    installError.value = t('skills.installDialog.errorNotMd')
+    installError.value = t('skills.installDialog.errorUnsupported')
+  }
+}
+
+async function handleDirectoryInstall(sourceDir: string) {
+  if (installing.value) return
+  installing.value = true
+  installError.value = ''
+  try {
+    const result = await installSkillFromDirectory(sourceDir)
+    if (!result.success) {
+      installError.value = result.warnings.join('; ') || '目录导入失败'
+      return
+    }
+    // 重置 Registry 使新 skill 立即可被发现
+    resetSkillRegistry()
+    closeInstallDialog()
+    await restartEngineAfterSkillChange(
+      `技能「${result.skillId}」已导入，正在重载...`,
+      `技能「${result.skillId}」已导入并重新载入`,
+    )
+  } catch (e: unknown) {
+    installError.value = e instanceof Error ? e.message : '导入失败'
+  } finally {
+    installing.value = false
   }
 }
 
@@ -914,20 +955,35 @@ defineExpose({ openInstallDialog, switchToHub })
               <Download :size="28" class="mx-auto" />
             </div>
             <p class="text-sm mb-1" :style="{ color: dragOver ? 'var(--hc-accent)' : 'var(--hc-text-secondary)' }">
-              {{ dragOver ? t('skills.installDialog.dropHint') : t('skills.installDialog.dropZone') }}
+              {{ dragOver ? t('skills.installDialog.dropHint') : t('skills.installDialog.dropZoneDir') }}
             </p>
             <p class="text-xs mb-3" :style="{ color: 'var(--hc-text-muted)' }">
               {{ t('skills.installDialog.dropZoneOr') }}
             </p>
-            <button
-              class="px-4 py-1.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-              :style="{ background: 'var(--hc-accent)' }"
-              :disabled="installing"
-              @click="handlePickFile"
-            >
-              <FolderOpen :size="14" class="inline -mt-0.5 mr-1" />
-              {{ t('skills.installDialog.pickFile') }}
-            </button>
+            <div class="flex gap-2 justify-center">
+              <button
+                class="px-4 py-1.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+                :style="{ background: 'var(--hc-accent)' }"
+                :disabled="installing"
+                @click="handlePickFile"
+              >
+                <FolderOpen :size="14" class="inline -mt-0.5 mr-1" />
+                {{ t('skills.installDialog.pickFile') }}
+              </button>
+              <button
+                class="px-4 py-1.5 rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
+                :style="{
+                  background: 'var(--hc-bg-primary)',
+                  border: '1px solid var(--hc-border)',
+                  color: 'var(--hc-text-primary)',
+                }"
+                :disabled="installing"
+                @click="handlePickDirectory"
+              >
+                <FolderOpen :size="14" class="inline -mt-0.5 mr-1" />
+                {{ t('skills.installDialog.pickDirectory') }}
+              </button>
+            </div>
           </div>
 
           <!-- URL input -->

@@ -15,8 +15,15 @@ export type ResultSurfaceKind = 'text' | 'summary' | 'bullet'
 /**
  * Infer result surface kind from skill ID.
  * Pure function — no side effects, deterministic mapping.
+ * 优先读 meta.resultKind，回退到 skillId 硬编码映射。
  */
-export function inferResultKind(skillId: string): ResultSurfaceKind {
+export function inferResultKind(
+  skillId: string,
+  meta?: { resultKind?: string },
+): ResultSurfaceKind {
+  if (meta?.resultKind && ['text', 'summary', 'bullet'].includes(meta.resultKind)) {
+    return meta.resultKind as ResultSurfaceKind
+  }
   switch (skillId) {
     case 'summarize':
       return 'summary'

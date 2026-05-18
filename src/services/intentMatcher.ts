@@ -4,7 +4,7 @@
  * 职责：
  * - 根据用户输入文本匹配 Skill 的 triggers
  * - 计算匹配置信度（精确匹配 vs 包含匹配）
- * - 仅匹配 official 来源的 Skill（custom 不进入 NL 匹配）
+ * - 匹配所有有 triggers 的 Skill（official + custom）
  *
  * 设计原则：
  * - 纯函数，无副作用，无状态
@@ -27,7 +27,7 @@ export interface IntentMatch {
 // ─── Core Functions ───────────────────────────────────
 
 /**
- * 遍历所有 official skill 的 triggers，匹配用户输入
+ * 遍历所有有 triggers 的 skill，匹配用户输入
  * @returns 置信度最高的匹配结果，无匹配返回 null
  */
 export function matchIntent(
@@ -39,7 +39,6 @@ export function matchIntent(
   let best: IntentMatch | null = null
 
   for (const skill of skills) {
-    if (skill.source !== 'official') continue
     if (!skill.triggers || skill.triggers.length === 0) continue
 
     for (const trigger of skill.triggers) {

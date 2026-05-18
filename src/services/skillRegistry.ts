@@ -36,6 +36,12 @@ export class SkillRegistry {
     this.customBaseDir = customBaseDir
   }
 
+  /** 重置缓存，下次调用 getAllSkills / resolveSkill 时重新扫描 */
+  reset(): void {
+    this.cache.clear()
+    this.initialized = false
+  }
+
   // ── Lazy Initialize ──────────────────────────────────
 
   private async ensureInitialized(): Promise<void> {
