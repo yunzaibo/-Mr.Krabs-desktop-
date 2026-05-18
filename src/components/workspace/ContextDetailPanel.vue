@@ -89,7 +89,7 @@ function stageLabel(stage: string): string {
   return map[stage] || stage
 }
 
-function stateColor(state: string): string {
+function _stateColor(state: string): string {
   const map: Record<string, string> = {
     idle: 'var(--hc-text-muted)',
     preparing: '#f59e0b',

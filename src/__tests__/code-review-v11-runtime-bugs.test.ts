@@ -143,7 +143,7 @@ describe('BUG 5: WS inactivity timeout is 120s', () => {
 // ════════════════════════════════════════════════════════════
 
 describe('BUG 6: ensureSession does not push to sessions array', () => {
-  const facadeSrc = readSrc('stores/chat.ts')
+  const _facadeSrc = readSrc('stores/chat.ts')
   const sessionLifecycleSrc = readSrc('stores/chat-session-lifecycle.ts')
   const streamCompletionSrc = readSrc('stores/chat-stream-completion.ts')
 
