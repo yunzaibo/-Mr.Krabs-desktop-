@@ -314,6 +314,16 @@ function navigateTo(path: string) {
         </button>
       </div>
 
+      <!-- Empty State: no tasks today -->
+      <div v-if="runtimeStats.activeTasks === 0 && runtimeStats.completedToday === 0 && runtimeStats.failedToday === 0" class="hc-dash__empty-runtime">
+        <div class="hc-dash__empty-runtime-text">
+          {{ t('dashboard.noTasksYet', 'No tasks run yet today. Start a chat or automation to get going.') }}
+        </div>
+        <button class="hc-dash__empty-runtime-btn" @click="navigateTo('/chat')">
+          {{ t('dashboard.startChat', 'Start Chat') }}
+        </button>
+      </div>
+
       <div class="hc-dash__grid-equal">
         <!-- Recent Activity -->
         <div class="hc-dash__card">
@@ -644,5 +654,38 @@ function navigateTo(path: string) {
 
 .hc-dash__runtime-link:hover {
   opacity: 0.7;
+}
+
+/* ── Empty Runtime State ── */
+.hc-dash__empty-runtime {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--hc-bg-card);
+  border: 1px dashed var(--hc-border);
+  border-radius: 10px;
+}
+
+.hc-dash__empty-runtime-text {
+  font-size: 12px;
+  color: var(--hc-text-muted);
+}
+
+.hc-dash__empty-runtime-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--hc-accent);
+  background: var(--hc-accent);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.hc-dash__empty-runtime-btn:hover {
+  opacity: 0.85;
 }
 </style>
