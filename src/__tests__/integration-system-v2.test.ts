@@ -39,11 +39,7 @@ const msgSvc = {
 vi.mock('@/services/messageService', () => msgSvc)
 
 const chatSvc = {
-  sendViaWebSocket: vi.fn(),
-  sendViaBackend: vi.fn(),
-  ensureWebSocketConnected: vi.fn().mockResolvedValue(false),
   clearWebSocketCallbacks: vi.fn(),
-  ChatRequestError: class extends Error { noFallback = false },
 }
 vi.mock('@/services/chatService', () => chatSvc)
 
