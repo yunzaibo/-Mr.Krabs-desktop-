@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.4.2 (2026-05-18)
+
+### Skill 目录导入 + 自定义 skill NL 触发
+
+- **Skill 目录导入**：支持导入完整 skill 目录（skill.json + SKILL.md + references/），UI 新增"选择目录"按钮和拖拽目录支持
+- **Claude Code 目录兼容**：自动检测 .claude/ 格式目录并转换为 HexClaw skill 格式
+- **Registry 实时刷新**：导入后自动重置 SkillRegistry 缓存，@skillId 立即可用
+- **自定义 skill NL 触发**：移除 official-only 限制，自定义 skill 配置 triggers 后可通过自然语言触发
+- **inferResultKind 扩展**：支持 meta 参数，为自定义 skill 渲染策略预留扩展点
+- **.gitignore 隐私保护**：排除 docs/checkpoints/ 和 docs/product-runtime/ 防止设计文档泄露
+
+#### 文件变更
+- 新增 `src/services/skillDirectoryInstaller.ts`：核心目录导入逻辑
+- 修改 `src/views/SkillsView.vue`：目录选择器 + 拖拽支持
+- 修改 `src/services/skillRegistry.ts`：添加 reset() 方法
+- 修改 `src/services/skillBridge.ts`：导出 resetSkillRegistry()
+- 修改 `src/services/intentMatcher.ts`：移除 official-only NL 过滤
+- 修改 `src/types/resultSurface.ts`：inferResultKind 支持 meta
+- 新增 3 个测试文件，22 个测试全部通过
+
 ## v0.4.1 (2026-05-17)
 
 ### Runtime Presence Phase 1 — 术语收敛 + TaskCard 组件

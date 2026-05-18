@@ -53,7 +53,7 @@ macOS / Windows / Linux 原生运行 · Sidecar 架构本地部署 · 零云端�
 | **Agent 编排** | 自定义 Agent 角色/目标/背景，多 Agent 协作 (Handoff + Orchestrate + Spawn)，Agent 会议模式，角色模板库 |
 | **自主 Agent** | Budget 三维预算兜底 (token/时间/金额)，代码执行沙箱，Checkpoint 长任务恢复 |
 | **工具审批** | 危险工具 WebSocket 实时审批 (ToolApprovalCard)，safe/sensitive/dangerous 三级风险分类，"始终允许"记忆 |
-| **Skill 系统** | 技能市场 + 自定义技能 + LLM 创建新 Skill，Skill Chain 链式调用，依赖管理，Tool 注册与 Per-tool 权限 |
+| **Skill 系统** | 技能市场 + 自定义技能 + 目录导入（skill.json + SKILL.md + references/）+ Claude Code 格式兼容，Skill Chain 链式调用，依赖管理，Tool 注册与 Per-tool 权限 |
 | **MCP 协议** | Model Context Protocol 工具集成 (stdio/SSE/Streamable HTTP)，OAuth 2.0+PKCE 认证，命令白名单安全校验 |
 | **工作流画布** | 可视化拖拽编排 Agent 工作流，DAG 图执行引擎 |
 | **知识库 (RAG)** | 文档上传/解析/向量检索，支持 PDF / Markdown / TXT 等格式；Auto-RAG 自动检索知识库注入上下文 |
