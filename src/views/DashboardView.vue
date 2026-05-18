@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useDashboardRuntime } from '@/composables/useDashboardRuntime'
 import { RefreshCw, Activity } from 'lucide-vue-next'
+import RuntimeEventsCard from '@/components/dashboard/RuntimeEventsCard.vue'
+import RuntimeHealthCard from '@/components/dashboard/RuntimeHealthCard.vue'
 import PageToolbar from '@/components/common/PageToolbar.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SegmentedControl from '@/components/common/SegmentedControl.vue'
@@ -357,6 +359,12 @@ function navigateTo(path: string) {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Runtime Health + Events Row -->
+      <div class="hc-dash__grid-equal">
+        <RuntimeHealthCard :health="runtime.healthStatus.value" />
+        <RuntimeEventsCard :events="runtime.recentEvents.value" />
       </div>
     </div>
   </div>

@@ -15,6 +15,7 @@ import { computed } from 'vue'
 import { useRuntimeStore } from '@/stores/runtime'
 import { useTaskStore } from '@/stores/tasks'
 import type { RuntimeEvent } from '@/types/timeline'
+import type { RecoverySummary } from '@/types/recovery'
 
 export interface DashboardRuntimeSummary {
   activeTaskCount: number
@@ -29,6 +30,13 @@ export interface DashboardActivityItem {
   type: 'task' | 'runtime'
   status: string
   time: string
+}
+
+export interface DashboardHealthStatus {
+  overall: 'healthy' | 'degraded' | 'error'
+  activeTasks: number
+  failedToday: number
+  recoveries: RecoverySummary[]
 }
 
 export function useDashboardRuntime() {
@@ -68,6 +76,34 @@ export function useDashboardRuntime() {
 
   /** Context 摘要列表 */
   const contextSummaries = computed(() => runtimeStore.contextSummaries)
+
+  /** 活跃任务的 Recovery 摘要 */
+  const recoverySummaries = computed(() => {
+    return taskStore.activeTasks
+      .map((t) => runtimeStore.getRecoverySummary(t.id))
+      .filter((r): r is RecoverySummary => r !== null)
+  })
+
+  /** 系统健康状态 */
+  const healthStatus = computed<DashboardHealthStatus>(() => {
+    const failed = failedTodayCount.value
+    const recoveries = recoverySummaries.value
+    const hasFailedRecovery = recoveries.some((r) => r.resolution === 'failed')
+
+    let overall: DashboardHealthStatus['overall'] = 'healthy'
+    if (hasFailedRecovery || failed > 2) {
+      overall = 'error'
+    } else if (failed > 0 || recoveries.length > 0) {
+      overall = 'degraded'
+    }
+
+    return {
+      overall,
+      activeTasks: activeTaskCount.value,
+      failedToday: failed,
+      recoveries,
+    }
+  })
 
   /** 从 TaskStore + RuntimeStore 合成活动列表 */
   const activityItems = computed<DashboardActivityItem[]>(() => {
@@ -109,6 +145,8 @@ export function useDashboardRuntime() {
     failedTodayCount,
     recentEvents,
     contextSummaries,
+    recoverySummaries,
+    healthStatus,
     activityItems,
   }
 }
