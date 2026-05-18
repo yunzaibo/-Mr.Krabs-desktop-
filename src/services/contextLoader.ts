@@ -167,6 +167,11 @@ export class ContextLoader {
   unloadStaleLayers(context: RuntimeContext): string[] {
     const unloaded: string[] = []
 
+    // 已完成/失败的任务保留 execution layer（output 需保留供 Workspace 读取）
+    if (context.execution?.state === 'completed' || context.execution?.state === 'failed') {
+      return unloaded
+    }
+
     // 仅卸载 Execution Layer（保留 System + Task + Memory）
     if (context.execution && context.layerStates['execution'] === 'loaded') {
       context.execution = undefined
