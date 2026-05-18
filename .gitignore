@@ -59,6 +59,8 @@ docs/system/
 docs/current/
 docs/adr/
 docs/claude-code-practices/
+docs/checkpoints/
+docs/product-runtime/
 
 # Runtime output (image generation cache)
 /output/
