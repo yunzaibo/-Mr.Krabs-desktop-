@@ -38,6 +38,7 @@
 | **MCP 协议** | Model Context Protocol 工具集成 (stdio/SSE/Streamable HTTP)，OAuth 2.0+PKCE | 对接 MCP 生态标准，同时保证认证安全 |
 | **知识库 RAG** | 文档解析 → 向量检索 → Auto-RAG 自动注入上下文 | 让 Agent 基于用户私有知识回答，而非仅依赖模型训练数据 |
 | **记忆系统** | 长期 + 短期记忆，语义搜索，跨会话持久化 | Agent 记住用户偏好和历史上下文，越用越懂你 |
+| **多模态生成** | 统一 ChatInput 入口，按模型 capability 自动路由 gpt-image-2（图像）/ 视频生成 2.0，结果本地落盘 + URL 引用 | 一套对话界面覆盖文本、图像、视频生成；生成资产持久化到本地 Runtime，不依赖云端存储 |
 
 ## 架构
 

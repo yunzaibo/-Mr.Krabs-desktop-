@@ -38,6 +38,7 @@ Core idea: **Chat is just the entry point; Workspace is where real work happens.
 | **MCP Protocol** | Model Context Protocol tool integration (stdio/SSE/Streamable HTTP), OAuth 2.0+PKCE | Aligns with MCP ecosystem standard while ensuring auth security |
 | **Knowledge Base RAG** | Document parsing → vector retrieval → Auto-RAG context injection | Let agents answer from user's private knowledge, not just training data |
 | **Memory System** | Long-term + short-term memory, semantic search, cross-session persistence | Agents remember user preferences and history, improving over time |
+| **Multimodal Generation** | Unified ChatInput routes to gpt-image-2 (image) / video-gen 2.0 by model capability; results stored locally with URL references | Single chat UI covers text, image, and video generation; generated assets persist in local Runtime, no cloud storage dependency |
 
 ## Architecture
 
