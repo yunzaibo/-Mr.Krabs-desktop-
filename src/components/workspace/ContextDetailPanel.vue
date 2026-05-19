@@ -24,9 +24,32 @@ import ContextCard from '@/components/inspector/ContextCard.vue'
 import KeyValueRow from '@/components/inspector/KeyValueRow.vue'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
 import TaskStatusIndicator from './TaskStatusIndicator.vue'
+import RecoveryActionPanel from './RecoveryActionPanel.vue'
+import { useWorkspace } from '@/composables/useWorkspace'
+import { useRuntimeStore } from '@/stores/runtime'
 
 const { t } = useI18n()
 const router = useRouter()
+const { selectedRecoveryProjection, selectedTaskId } = useWorkspace()
+const runtimeStore = useRuntimeStore()
+
+// Recovery handlers
+const isRecoveryExecuting = ref(false)
+
+async function handleRecoveryRetry() {
+  if (!selectedTaskId.value) return
+  isRecoveryExecuting.value = true
+  try {
+    await runtimeStore.executeTask(selectedTaskId.value)
+  } finally {
+    isRecoveryExecuting.value = false
+  }
+}
+
+function handleRecoveryCleanRestart() {
+  if (!selectedTaskId.value) return
+  runtimeStore.destroyContext(selectedTaskId.value)
+}
 
 const props = defineProps<{
   projection: WorkspaceContextProjection | null
@@ -450,6 +473,17 @@ function getGroupLabel(group: string): string {
           />
         </div>
       </ContextCard>
+
+      <!-- Recovery Action Panel -->
+      <RecoveryActionPanel
+        v-if="selectedRecoveryProjection"
+        :assessment="selectedRecoveryProjection.summary"
+        :resolution-state="selectedRecoveryProjection.resolutionState"
+        :corruption-report="selectedRecoveryProjection.corruptionReport"
+        :is-executing="isRecoveryExecuting"
+        @retry="handleRecoveryRetry"
+        @clean-restart="handleRecoveryCleanRestart"
+      />
 
       <!-- Advanced toggle -->
       <button
