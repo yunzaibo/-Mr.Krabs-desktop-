@@ -53,7 +53,7 @@ export async function readAssetFile(storagePath: string): Promise<string> {
  */
 export async function fileExists(storagePath: string): Promise<boolean> {
   try {
-    await invoke('read_text_file', { path: storagePath })
+    await invoke<number>('get_file_size', { path: storagePath })
     return true
   } catch {
     return false

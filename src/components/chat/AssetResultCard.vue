@@ -68,7 +68,7 @@ function handlePrimaryAction() {
 </script>
 
 <template>
-  <div class="result-surface-card" role="article" :aria-label="`${typeLabel}: ${asset.fileName}`">
+  <div class="result-surface-card" role="group" :aria-label="`${typeLabel}: ${asset.fileName}`">
     <!-- Header -->
     <div class="result-surface-card__header">
       <component :is="typeIcon" class="result-surface-card__header--icon" :size="16" />

@@ -3,9 +3,10 @@
   Uses textarea (MVP) with marked for rendering. CodeMirror 6 can be added later.
 -->
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { X, Columns, Eye, Pencil } from 'lucide-vue-next'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const props = defineProps<{
   assetId: string
@@ -23,10 +24,22 @@ type ViewMode = 'split' | 'edit' | 'preview'
 const content = ref(props.initialContent)
 const viewMode = ref<ViewMode>('split')
 const isSaved = ref(false)
+const renderedMarkdown = ref('')
 
-const renderedMarkdown = computed(() => {
-  return marked.parse(content.value) as string
-})
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function updatePreview() {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    const raw = marked.parse(content.value) as string
+    renderedMarkdown.value = DOMPurify.sanitize(raw)
+  }, 150)
+}
+
+// Initial render
+updatePreview()
+
+watch(content, () => updatePreview(), { immediate: false })
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
@@ -46,6 +59,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
 

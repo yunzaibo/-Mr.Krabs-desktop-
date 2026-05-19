@@ -75,9 +75,9 @@ describe('AssetResultCard', () => {
     expect(wrapper.emitted('download')).toBeTruthy()
   })
 
-  it('has role="article" for accessibility', () => {
+  it('has role="group" for accessibility', () => {
     const wrapper = mount(AssetResultCard, { props: { asset: mockAsset } })
-    expect(wrapper.find('[role="article"]').exists()).toBe(true)
+    expect(wrapper.find('[role="group"]').exists()).toBe(true)
   })
 
   it('handles unknown asset type gracefully', () => {
