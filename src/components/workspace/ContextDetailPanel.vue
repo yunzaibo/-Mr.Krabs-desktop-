@@ -27,6 +27,7 @@ import TaskStatusIndicator from './TaskStatusIndicator.vue'
 import RecoveryActionPanel from './RecoveryActionPanel.vue'
 import { useWorkspace } from '@/composables/useWorkspace'
 import { useRuntimeStore } from '@/stores/runtime'
+import type { TaskStatus } from '@/types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -67,6 +68,11 @@ const execOutputExpanded = ref(false)
 
 // Advanced toggle — 所有 section 共享
 const advancedExpanded = ref(false)
+
+// Task status narrow cast (workspace projection uses `string`, TaskStatusIndicator needs TaskStatus)
+const taskStatus = computed<TaskStatus | undefined>(
+  () => props.projection?.task?.status as TaskStatus | undefined,
+)
 
 watch(
   () => props.projection?.health?.hasIssues,
@@ -216,8 +222,8 @@ function getGroupLabel(group: string): string {
       <!-- Task section -->
       <ContextCard :eyebrow="t('workspace.sections.task')" :title="projection.task.goal || projection.taskId.slice(0, 8)">
         <TaskStatusIndicator
-          v-if="projection.task"
-          :status="projection.task.status as 'running' | 'pending' | 'completed' | 'failed' | 'cancelled'"
+          v-if="projection.task && taskStatus"
+          :status="taskStatus"
           :elapsed="projection.task.elapsed"
         />
         <KeyValueRow
