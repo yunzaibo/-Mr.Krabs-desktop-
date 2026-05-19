@@ -111,6 +111,13 @@ export type TimelineCategory =
   | 'warning'  // budget.warning + recovery.*
   | 'output'   // asset.invalidated
 
+/**
+ * Timeline Event Category — 用于 TimelineFilterBar 过滤。
+ *
+ * 比 TimelineCategory 更精简，面向用户侧过滤 UI。
+ */
+export type TimelineEventCategory = 'all' | 'task' | 'context' | 'skill' | 'recovery'
+
 /** Timeline 条目投影 — 与 RuntimeEvent 完全解耦 */
 export interface TimelineItemProjection {
   time: string             // "12:03:45"
