@@ -124,6 +124,10 @@ export interface TimelineItemProjection {
   typeCategory: TimelineCategory
   typeLabel: string        // i18n key，由 UI 层 translate
   summary: string          // ≤200 chars
+  /** 可选唯一标识，用于 accordion 展开追踪 */
+  id?: string
+  /** 可选完整 RuntimeEvent 引用，用于 TimelineEventDetail 展开 */
+  event?: import('@/types/timeline').RuntimeEvent
 }
 
 // ─── Narrative Timeline ───────────────────────────

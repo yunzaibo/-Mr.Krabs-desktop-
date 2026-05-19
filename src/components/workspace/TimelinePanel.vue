@@ -8,8 +8,10 @@
  */
 import { ref, computed, watch, onUnmounted, onUpdated, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { TimelineItemProjection, TimelineNarrativeGroup, NarrativePhase } from '@/types/workspace'
+import type { TimelineItemProjection, TimelineNarrativeGroup, NarrativePhase, TimelineEventCategory } from '@/types/workspace'
 import TimelineItem from '@/components/inspector/TimelineItem.vue'
+import TimelineFilterBar from './TimelineFilterBar.vue'
+import TimelineEventDetail from './TimelineEventDetail.vue'
 
 const { t } = useI18n()
 
@@ -18,6 +20,13 @@ const _props = defineProps<{
   narrativeItems: TimelineNarrativeGroup[]
   taskId: string | null
   taskStatus?: string  // 'running' | 'pending' | 'completed' | 'failed' | 'cancelled'
+  showFilter?: boolean
+  currentFilter?: TimelineEventCategory
+  eventCounts?: Record<TimelineEventCategory, number>
+}>()
+
+const emit = defineEmits<{
+  'update:filter': [value: TimelineEventCategory]
 }>()
 
 // ── 视图模式 ──────────────────────────────────────
@@ -51,6 +60,29 @@ function toggleGroup(id: string) {
 
 function isExpanded(id: string): boolean {
   return expandedGroups.value.has(id)
+}
+
+// ── Event detail expand（accordion） ────────────────
+
+const expandedEventId = ref<string | null>(null)
+
+function toggleEventExpand(id: string) {
+  expandedEventId.value = expandedEventId.value === id ? null : id
+}
+
+// ── Filter ──────────────────────────────────────────
+
+function onFilterChange(category: TimelineEventCategory) {
+  emit('update:filter', category)
+}
+
+// ── Event color helper ──────────────────────────────
+
+function getEventColor(type: string): string {
+  if (type.includes('completed')) return 'var(--hc-success, #22c55e)'
+  if (type.includes('failed') || type.includes('error')) return 'var(--hc-error, #ef4444)'
+  if (type.includes('created') || type.includes('started')) return 'var(--hc-accent)'
+  return 'var(--hc-text-muted)'
 }
 
 // ── duration format（UI 层负责 presentation） ────
@@ -186,6 +218,15 @@ onUpdated(() => {
       </button>
     </div>
 
+    <!-- Filter bar -->
+    <TimelineFilterBar
+      v-if="showFilter"
+      class="hc-filter-bar"
+      :filter="currentFilter ?? 'all'"
+      :event-counts="eventCounts ?? { all: 0, task: 0, context: 0, skill: 0, recovery: 0 }"
+      @update:filter="onFilterChange"
+    />
+
     <!-- Empty state -->
     <div v-if="!taskId" class="timeline-panel__empty">
       <p>{{ t('workspace.timeline.emptyHint') }}</p>
@@ -285,13 +326,24 @@ onUpdated(() => {
 
     <!-- Raw events view -->
     <div v-else class="timeline-panel__events">
-      <TimelineItem
+      <div
         v-for="(item, idx) in items"
-        :key="idx"
-        :time="item.time"
-        :text="`${t(item.typeLabel)} · ${item.summary}`"
-        :dot-color="'var(--hc-accent)'"
-      />
+        :key="item.id ?? idx"
+        class="timeline-event-row"
+        :class="{ 'timeline-event-row--expanded': expandedEventId === (item.id ?? String(idx)) }"
+        @click="toggleEventExpand(item.id ?? String(idx))"
+      >
+        <TimelineItem
+          :time="item.time"
+          :text="`${t(item.typeLabel)} · ${item.summary}`"
+          :dot-color="getEventColor(item.typeCategory)"
+        />
+        <TimelineEventDetail
+          v-if="item.event"
+          :event="item.event"
+          :expanded="expandedEventId === (item.id ?? String(idx))"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -373,8 +425,24 @@ onUpdated(() => {
 .timeline-panel__events {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
   padding: 0 4px;
+}
+
+/* ── Event row (accordion) ────────────────────────── */
+
+.timeline-event-row {
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.timeline-event-row:hover {
+  background: var(--hc-bg-hover);
+}
+
+.timeline-event-row--expanded {
+  background: var(--hc-bg-subtle, rgba(99, 102, 241, 0.04));
 }
 
 /* ── Narrative groups ───────────────────────────── */
