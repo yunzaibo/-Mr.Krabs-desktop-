@@ -86,8 +86,7 @@ export async function apiSSE(
   })
 
   if (!response.ok) {
-    const apiErr = fromHttpStatus(response.status)
-    throw new Error(apiErr.message)
+    throw fromHttpStatus(response.status)
   }
 
   if (!response.body) {
