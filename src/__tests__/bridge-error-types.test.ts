@@ -107,3 +107,70 @@ describe('isBridgeError (requires Task 2)', () => {
     expect(isBridgeError({ __brand: 'BridgeError', code: 'RT_TASK_FAILED' })).toBe(false)
   })
 })
+
+// ─── Mapping tests (require Task 3) ───
+
+describe('bridgeErrorToApiError', () => {
+  const testCases: Array<{
+    input: BridgeErrorCode
+    expectedApiCode: string
+    description: string
+  }> = [
+    { input: 'RT_TASK_FAILED', expectedApiCode: 'SERVER_ERROR', description: '执行失败映射到 SERVER_ERROR' },
+    { input: 'RT_NO_OUTPUT', expectedApiCode: 'SERVER_ERROR', description: '无输出映射到 SERVER_ERROR' },
+    { input: 'RT_ILLEGAL_TRANSITION', expectedApiCode: 'SERVER_ERROR', description: '非法转换映射到 SERVER_ERROR' },
+    { input: 'RT_TIMEOUT', expectedApiCode: 'TIMEOUT', description: '超时映射到 TIMEOUT' },
+    { input: 'RT_CANCELLED', expectedApiCode: 'SERVER_ERROR', description: '取消映射到 SERVER_ERROR' },
+    { input: 'BRIDGE_INTERNAL', expectedApiCode: 'UNKNOWN', description: '桥接内部错误映射到 UNKNOWN' },
+  ]
+
+  testCases.forEach(({ input, expectedApiCode, description }) => {
+    it(`maps ${input} → ${expectedApiCode} (${description})`, async () => {
+      const { createBridgeError } = await import('@/utils/errors')
+      const { bridgeErrorToApiError } = await import('@/services/runtimeBridge')
+      const bridgeError = createBridgeError({
+        code: input,
+        message: `test error: ${input}`,
+        cause: new Error('original'),
+      })
+      const apiError = bridgeErrorToApiError(bridgeError)
+      expect(apiError.code).toBe(expectedApiCode)
+      expect(apiError.message).toBe(bridgeError.message)
+      expect(apiError.cause).toBe(bridgeError.cause)
+    })
+  })
+
+  it('preserves cause chain', async () => {
+    const { createBridgeError } = await import('@/utils/errors')
+    const { bridgeErrorToApiError } = await import('@/services/runtimeBridge')
+    const original = new Error('original')
+    const bridgeError = createBridgeError({ code: 'RT_TASK_FAILED', message: 'wrapped', cause: original })
+    const apiError = bridgeErrorToApiError(bridgeError)
+    expect(apiError.cause).toBe(original)
+  })
+
+  it('handles undefined cause', async () => {
+    const { createBridgeError } = await import('@/utils/errors')
+    const { bridgeErrorToApiError } = await import('@/services/runtimeBridge')
+    const bridgeError = createBridgeError({ code: 'RT_NO_OUTPUT', message: 'no output' })
+    const apiError = bridgeErrorToApiError(bridgeError)
+    expect(apiError.message).toBe('no output')
+    expect(apiError.cause).toBeUndefined()
+  })
+})
+
+describe('BRIDGE_TO_API_MAP snapshot', () => {
+  it('matches snapshot', async () => {
+    const { createBridgeError } = await import('@/utils/errors')
+    const { bridgeErrorToApiError } = await import('@/services/runtimeBridge')
+    const allCodes: BridgeErrorCode[] = [
+      'RT_TASK_FAILED', 'RT_NO_OUTPUT', 'RT_ILLEGAL_TRANSITION',
+      'RT_TIMEOUT', 'RT_CANCELLED', 'BRIDGE_INTERNAL',
+    ]
+    const results = allCodes.map(code => {
+      const err = createBridgeError({ code, message: 'snapshot' })
+      return { code, apiCode: bridgeErrorToApiError(err).code }
+    })
+    expect(results).toMatchSnapshot()
+  })
+})

@@ -99,7 +99,7 @@ describe('executeChatTask', () => {
       await expect(executeChatTask('task-3')).rejects.toThrow('LLM 服务不可用')
 
       expect(mockTaskStoreFail).toHaveBeenCalledWith('task-3', {
-        code: 'EXECUTION_FAILED',
+        code: 'RT_TASK_FAILED',
         message: 'LLM 服务不可用',
       })
       expect(mockTaskStoreComplete).not.toHaveBeenCalled()
@@ -112,7 +112,7 @@ describe('executeChatTask', () => {
       await expect(executeChatTask('task-4')).rejects.toThrow('执行完成但无输出结果')
 
       expect(mockTaskStoreFail).toHaveBeenCalledWith('task-4', {
-        code: 'EXECUTION_FAILED',
+        code: 'RT_NO_OUTPUT',
         message: '执行完成但无输出结果',
       })
       expect(mockTaskStoreComplete).not.toHaveBeenCalled()
@@ -125,7 +125,7 @@ describe('executeChatTask', () => {
       await expect(executeChatTask('task-5')).rejects.toThrow('执行完成但无输出结果')
 
       expect(mockTaskStoreFail).toHaveBeenCalledWith('task-5', {
-        code: 'EXECUTION_FAILED',
+        code: 'RT_NO_OUTPUT',
         message: '执行完成但无输出结果',
       })
     })
@@ -153,18 +153,20 @@ describe('executeChatTask', () => {
 })
 
 describe('bridgeErrorToApiError', () => {
-  it('maps EXECUTION_FAILED to SERVER_ERROR', () => {
+  it('maps RT_TASK_FAILED to SERVER_ERROR', () => {
     const result = bridgeErrorToApiError({
-      code: 'EXECUTION_FAILED',
+      __brand: 'BridgeError',
+      code: 'RT_TASK_FAILED',
       message: '执行器内部错误',
     })
     expect(result.code).toBe('SERVER_ERROR')
     expect(result.message).toBe('执行器内部错误')
   })
 
-  it('maps NO_OUTPUT to SERVER_ERROR', () => {
+  it('maps RT_NO_OUTPUT to SERVER_ERROR', () => {
     const result = bridgeErrorToApiError({
-      code: 'NO_OUTPUT',
+      __brand: 'BridgeError',
+      code: 'RT_NO_OUTPUT',
       message: '执行完成但无输出结果',
     })
     expect(result.code).toBe('SERVER_ERROR')

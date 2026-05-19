@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BRIDGE_TO_API_MAP snapshot > matches snapshot 1`] = `
+[
+  {
+    "apiCode": "SERVER_ERROR",
+    "code": "RT_TASK_FAILED",
+  },
+  {
+    "apiCode": "SERVER_ERROR",
+    "code": "RT_NO_OUTPUT",
+  },
+  {
+    "apiCode": "SERVER_ERROR",
+    "code": "RT_ILLEGAL_TRANSITION",
+  },
+  {
+    "apiCode": "TIMEOUT",
+    "code": "RT_TIMEOUT",
+  },
+  {
+    "apiCode": "SERVER_ERROR",
+    "code": "RT_CANCELLED",
+  },
+  {
+    "apiCode": "UNKNOWN",
+    "code": "BRIDGE_INTERNAL",
+  },
+]
+`;
