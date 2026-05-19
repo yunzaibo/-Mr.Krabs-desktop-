@@ -39,6 +39,13 @@ export interface DashboardHealthStatus {
   recoveries: RecoverySummary[]
 }
 
+export interface DashboardMetrics {
+  tasksPerDay: { date: string; completed: number; failed: number }[]
+  avgCompletionTime: number
+  failureRate: number
+  totalTasks: number
+}
+
 export function useDashboardRuntime() {
   const runtimeStore = useRuntimeStore()
   const taskStore = useTaskStore()
@@ -105,6 +112,34 @@ export function useDashboardRuntime() {
     }
   })
 
+  /** Dashboard 统计指标 */
+  const dashboardMetrics = computed<DashboardMetrics>(() => {
+    const completed = taskStore.completedTasks || []
+    const failed = taskStore.failedTasks || []
+    const total = completed.length + failed.length
+
+    const now = new Date()
+    const tasksPerDay = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(now)
+      date.setDate(date.getDate() - (6 - i))
+      const dateStr = date.toISOString().split('T')[0]
+      return {
+        date: dateStr,
+        completed: completed.filter((t) => t.completedAt?.startsWith(dateStr)).length,
+        failed: failed.filter((t) => t.failedAt?.startsWith(dateStr)).length,
+      }
+    })
+
+    const durations = completed.filter((t) => t.duration).map((t) => t.duration)
+    const avgCompletionTime = durations.length > 0
+      ? durations.reduce((a: number, b: number) => a + b, 0) / durations.length
+      : 0
+
+    const failureRate = total > 0 ? (failed.length / total) * 100 : 0
+
+    return { tasksPerDay, avgCompletionTime, failureRate, totalTasks: total }
+  })
+
   /** 从 TaskStore + RuntimeStore 合成活动列表 */
   const activityItems = computed<DashboardActivityItem[]>(() => {
     const items: DashboardActivityItem[] = []
@@ -148,5 +183,6 @@ export function useDashboardRuntime() {
     recoverySummaries,
     healthStatus,
     activityItems,
+    dashboardMetrics,
   }
 }
