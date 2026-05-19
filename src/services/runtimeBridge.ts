@@ -35,10 +35,7 @@ const BRIDGE_TO_API_MAP: Record<BridgeErrorCode, ApiError['code']> = {
 
 /** BridgeError → ApiError 映射 */
 export function bridgeErrorToApiError(err: BridgeError): ApiError {
-  const apiCode = BRIDGE_TO_API_MAP[err.code] ?? 'UNKNOWN'
-  if (!(err.code in BRIDGE_TO_API_MAP)) {
-    console.warn(`[Bridge] 未知 BridgeErrorCode: ${err.code}`)
-  }
+  const apiCode = BRIDGE_TO_API_MAP[err.code]
   return createApiError(apiCode, err.message, undefined, err.cause)
 }
 
@@ -102,9 +99,13 @@ export async function executeChatTask(taskId: string): Promise<TaskResult> {
 
     return result
   } catch (e) {
-    const msg = (e as Error).message
+    // If already converted to ApiError (e.g., RT_NO_OUTPUT branch), rethrow directly
+    if (e && typeof e === 'object' && 'code' in e && 'message' in e && !('__brand' in e)) {
+      throw e
+    }
     // Runtime 路径下，Runtime 已写入 execution.failed timeline
     // Bridge 代理 TaskStore fail（不重复 failChatTask，timeline 已写入）
+    const msg = e instanceof Error ? e.message : String(e)
     const bridgeErr = createBridgeError({ code: 'RT_TASK_FAILED', message: msg })
     taskStore.failTask(taskId, { code: bridgeErr.code, message: bridgeErr.message })
     throw bridgeErrorToApiError(bridgeErr)
