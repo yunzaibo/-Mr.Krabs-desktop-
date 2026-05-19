@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | 'RATE_LIMITED'        // 请求被限流 (429)
   | 'SERVER_ERROR'        // 服务端错误 (500+)
   | 'SSE_PARSE_ERROR'     // SSE 流解析失败
+  | 'CANCELLED'           // 用户取消操作
   | 'UNKNOWN'             // 未知错误
 
 /** 结构化 API 错误 */

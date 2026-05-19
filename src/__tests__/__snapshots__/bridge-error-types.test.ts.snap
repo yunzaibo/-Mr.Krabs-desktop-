@@ -19,7 +19,7 @@ exports[`BRIDGE_TO_API_MAP snapshot > matches snapshot 1`] = `
     "code": "RT_TIMEOUT",
   },
   {
-    "apiCode": "SERVER_ERROR",
+    "apiCode": "CANCELLED",
     "code": "RT_CANCELLED",
   },
   {

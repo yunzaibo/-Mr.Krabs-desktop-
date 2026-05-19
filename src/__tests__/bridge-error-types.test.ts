@@ -120,7 +120,7 @@ describe('bridgeErrorToApiError', () => {
     { input: 'RT_NO_OUTPUT', expectedApiCode: 'SERVER_ERROR', description: '无输出映射到 SERVER_ERROR' },
     { input: 'RT_ILLEGAL_TRANSITION', expectedApiCode: 'SERVER_ERROR', description: '非法转换映射到 SERVER_ERROR' },
     { input: 'RT_TIMEOUT', expectedApiCode: 'TIMEOUT', description: '超时映射到 TIMEOUT' },
-    { input: 'RT_CANCELLED', expectedApiCode: 'SERVER_ERROR', description: '取消映射到 SERVER_ERROR' },
+    { input: 'RT_CANCELLED', expectedApiCode: 'CANCELLED', description: '取消映射到 CANCELLED' },
     { input: 'BRIDGE_INTERNAL', expectedApiCode: 'UNKNOWN', description: '桥接内部错误映射到 UNKNOWN' },
   ]
 
@@ -210,5 +210,27 @@ describe('canTransition', () => {
       const { canTransition } = await import('@/types/execution')
       expect(canTransition(from as any, to as any)).toBe(false)
     })
+  })
+})
+
+describe('CANCELLED error code', () => {
+  it('is included in ApiErrorCode', async () => {
+    const { createApiError } = await import('@/utils/errors')
+    const err = createApiError('CANCELLED', '操作已取消')
+    expect(err.code).toBe('CANCELLED')
+  })
+
+  it('RT_CANCELLED maps to CANCELLED (not SERVER_ERROR)', async () => {
+    const { createBridgeError } = await import('@/utils/errors')
+    const { bridgeErrorToApiError } = await import('@/services/runtimeBridge')
+    const bridgeErr = createBridgeError({ code: 'RT_CANCELLED', message: '操作已取消' })
+    const apiErr = bridgeErrorToApiError(bridgeErr)
+    expect(apiErr.code).toBe('CANCELLED')
+  })
+
+  it('CANCELLED is not retryable', async () => {
+    const { createApiError, isRetryable } = await import('@/utils/errors')
+    const err = createApiError('CANCELLED', '操作已取消')
+    expect(isRetryable(err)).toBe(false)
   })
 })
