@@ -1,11 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
+import { ref, type Ref } from 'vue'
 
-// ─── Mocks ──────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────
 
-vi.mock('@/utils/logger', () => ({
-  logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() },
-}))
+const mockSending = ref(true)
+const mockDraftSending = ref(false)
+
+// ─── Factory ────────────────────────────────────────
+
+function createTestController(overrides?: {
+  error?: Ref<any>
+  currentSessionId?: string
+  streamingSessionId?: string | null
+}) {
+  const error = overrides?.error ?? ref(null)
+  return createChatStreamErrorController({
+    error,
+    currentSessionId: ref(overrides?.currentSessionId ?? 'current-s1'),
+    streamingSessionId: ref(overrides?.streamingSessionId ?? null),
+    logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any,
+    createId: mockCreateId,
+    appendMessageToSession: mockAppendMessage,
+    resetSessionStream: mockResetSessionStream,
+    loadSessions: mockLoadSessions,
+  })
+}
+
+// ─── Shared Mocks ───────────────────────────────────
+
+const mockAppendMessage = vi.fn()
+const mockResetSessionStream = vi.fn()
+const mockLoadSessions = vi.fn()
+const mockCreateId = vi.fn(() => 'test-id-1')
+
+// ─── Imports (after vi.mock removal) ────────────────
 
 import { createChatStreamErrorController } from '../chat-stream-error'
 import {
@@ -19,57 +48,44 @@ import { bridgeErrorToApiError } from '@/services/runtimeBridge'
 
 describe('handleSendError input types', () => {
   let controller: ReturnType<typeof createChatStreamErrorController>
-  let error: { value: any }
-  const mockAppendMessage = vi.fn()
-  const mockResetSessionStream = vi.fn()
-  const mockLoadSessions = vi.fn()
-  const mockCreateId = vi.fn(() => 'test-id-1')
+  let error: Ref<any>
 
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    error = { value: null }
-    controller = createChatStreamErrorController({
-      error,
-      currentSessionId: { value: 'current-s1' } as any,
-      streamingSessionId: { value: null } as any,
-      logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any,
-      createId: mockCreateId,
-      appendMessageToSession: mockAppendMessage,
-      resetSessionStream: mockResetSessionStream,
-      loadSessions: mockLoadSessions,
-    })
+    error = ref(null)
+    controller = createTestController({ error })
   })
 
   it('plain Error → UNKNOWN via fromNativeError', () => {
-    controller.handleSendError(new Error('network down'), 's1', { value: true } as any, { value: false } as any)
+    controller.handleSendError(new Error('network down'), 's1', mockSending, mockDraftSending)
     expect(error.value).toMatchObject({ code: 'UNKNOWN', message: 'network down' })
   })
 
   it('ApiError from WS path → passthrough', () => {
     const apiErr = createApiError('RATE_LIMITED', '请求过于频繁', 429)
-    controller.handleSendError(apiErr, 's1', { value: true } as any, { value: false } as any)
-    expect(error.value).toBe(apiErr)
+    controller.handleSendError(apiErr, 's1', mockSending, mockDraftSending)
+    expect(error.value).toStrictEqual(apiErr)
   })
 
   it('ApiError from RT path → passthrough', () => {
     const apiErr = createApiError('SERVER_ERROR', '执行器内部错误')
-    controller.handleSendError(apiErr, 's1', { value: true } as any, { value: false } as any)
-    expect(error.value).toBe(apiErr)
+    controller.handleSendError(apiErr, 's1', mockSending, mockDraftSending)
+    expect(error.value).toStrictEqual(apiErr)
   })
 
   it('string error → UNKNOWN', () => {
-    controller.handleSendError('raw string', 's1', { value: true } as any, { value: false } as any)
+    controller.handleSendError('raw string', 's1', mockSending, mockDraftSending)
     expect(error.value).toMatchObject({ code: 'UNKNOWN', message: 'raw string' })
   })
 
   it('null → UNKNOWN with fallback message', () => {
-    controller.handleSendError(null, 's1', { value: true } as any, { value: false } as any)
+    controller.handleSendError(null, 's1', mockSending, mockDraftSending)
     expect(error.value).toMatchObject({ code: 'UNKNOWN' })
   })
 
   it('empty message → fallback to default', () => {
-    controller.handleSendError({ code: 'TIMEOUT', message: '' }, 's1', { value: true } as any, { value: false } as any)
+    controller.handleSendError({ code: 'TIMEOUT', message: '' }, 's1', mockSending, mockDraftSending)
     expect(mockAppendMessage).toHaveBeenCalledWith('s1', expect.objectContaining({
       content: '发送失败，请检查 hexclaw 引擎是否运行',
     }))
@@ -77,60 +93,41 @@ describe('handleSendError input types', () => {
 })
 
 describe('session fallback chain', () => {
-  let error: { value: any }
-  const mockAppendMessage = vi.fn()
-  const mockResetSessionStream = vi.fn()
-  const mockLoadSessions = vi.fn()
-  const mockCreateId = vi.fn(() => 'test-id-1')
+  let error: Ref<any>
 
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    error = { value: null }
+    error = ref(null)
   })
 
   it('uses provided sessionId', () => {
-    const controller = createChatStreamErrorController({
+    const controller = createTestController({
       error,
-      currentSessionId: { value: 'current-s1' } as any,
-      streamingSessionId: { value: 'stream-s1' } as any,
-      logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any,
-      createId: mockCreateId,
-      appendMessageToSession: mockAppendMessage,
-      resetSessionStream: mockResetSessionStream,
-      loadSessions: mockLoadSessions,
+      currentSessionId: 'current-s1',
+      streamingSessionId: 'stream-s1',
     })
-    controller.handleSendError(new Error('fail'), 'provided-s1', { value: true } as any, { value: false } as any)
+    controller.handleSendError(new Error('fail'), 'provided-s1', mockSending, mockDraftSending)
     expect(mockResetSessionStream).toHaveBeenCalledWith('provided-s1', expect.anything(), expect.anything())
   })
 
   it('falls back to streamingSessionId when sessionId is null', () => {
-    const controller = createChatStreamErrorController({
+    const controller = createTestController({
       error,
-      currentSessionId: { value: 'current-s1' } as any,
-      streamingSessionId: { value: 'stream-s1' } as any,
-      logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any,
-      createId: mockCreateId,
-      appendMessageToSession: mockAppendMessage,
-      resetSessionStream: mockResetSessionStream,
-      loadSessions: mockLoadSessions,
+      currentSessionId: 'current-s1',
+      streamingSessionId: 'stream-s1',
     })
-    controller.handleSendError(new Error('fail'), null, { value: true } as any, { value: false } as any)
+    controller.handleSendError(new Error('fail'), null, mockSending, mockDraftSending)
     expect(mockResetSessionStream).toHaveBeenCalledWith('stream-s1', expect.anything(), expect.anything())
   })
 
   it('falls back to currentSessionId when both are null', () => {
-    const controller = createChatStreamErrorController({
+    const controller = createTestController({
       error,
-      currentSessionId: { value: 'current-s1' } as any,
-      streamingSessionId: { value: null } as any,
-      logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() } as any,
-      createId: mockCreateId,
-      appendMessageToSession: mockAppendMessage,
-      resetSessionStream: mockResetSessionStream,
-      loadSessions: mockLoadSessions,
+      currentSessionId: 'current-s1',
+      streamingSessionId: null,
     })
-    controller.handleSendError(new Error('fail'), null, { value: true } as any, { value: false } as any)
+    controller.handleSendError(new Error('fail'), null, mockSending, mockDraftSending)
     expect(mockResetSessionStream).toHaveBeenCalledWith('current-s1', expect.anything(), expect.anything())
   })
 })

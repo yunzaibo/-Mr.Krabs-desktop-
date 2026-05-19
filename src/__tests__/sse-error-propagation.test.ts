@@ -41,15 +41,10 @@ describe('apiSSE error propagation', () => {
       status: 401,
       statusText: 'Unauthorized',
     })
-
-    try {
-      await apiSSE('/test')
-      expect.fail('should have thrown')
-    } catch (e: any) {
-      // fromNativeError should passthrough ApiError
-      const { fromNativeError } = await import('@/utils/errors')
+    const { fromNativeError } = await import('@/utils/errors')
+    await expect(apiSSE('/test')).rejects.toSatisfy((e: unknown) => {
       const normalized = fromNativeError(e)
-      expect(normalized.code).toBe('UNAUTHORIZED')
-    }
+      return normalized.code === 'UNAUTHORIZED'
+    })
   })
 })
