@@ -23,6 +23,7 @@ import TaskActionBar from '@/components/workspace/TaskActionBar.vue'
 import ContextCard from '@/components/inspector/ContextCard.vue'
 import KeyValueRow from '@/components/inspector/KeyValueRow.vue'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
+import TaskStatusIndicator from './TaskStatusIndicator.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -191,9 +192,10 @@ function getGroupLabel(group: string): string {
 
       <!-- Task section -->
       <ContextCard :eyebrow="t('workspace.sections.task')" :title="projection.task.goal || projection.taskId.slice(0, 8)">
-        <KeyValueRow
-          :label="t('workspace.field.status')"
-          :value="projection.task.status"
+        <TaskStatusIndicator
+          v-if="projection.task"
+          :status="projection.task.status as 'running' | 'pending' | 'completed' | 'failed' | 'cancelled'"
+          :elapsed="projection.task.elapsed"
         />
         <KeyValueRow
           v-if="projection.task.progress !== undefined"

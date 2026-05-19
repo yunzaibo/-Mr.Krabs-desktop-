@@ -6,7 +6,7 @@ const { t } = useI18n()
 
 const props = defineProps<{
   status: 'running' | 'pending' | 'completed' | 'failed' | 'cancelled'
-  elapsed?: number
+  elapsed?: number | string
 }>()
 
 const dotClass = computed(() => {
@@ -22,19 +22,21 @@ const statusText = computed(() => t(`workspace.status.${props.status}`))
 
 const showElapsed = computed(() => props.status === 'running' && props.elapsed != null)
 
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
+const displayElapsed = computed(() => {
+  if (props.elapsed == null) return ''
+  if (typeof props.elapsed === 'string') return props.elapsed
+  if (props.elapsed < 60) return `${props.elapsed}s`
+  const m = Math.floor(props.elapsed / 60)
+  const s = props.elapsed % 60
   return s > 0 ? `${m}m ${s}s` : `${m}m`
-}
+})
 </script>
 
 <template>
   <div class="task-status-indicator" role="status" :aria-live="status === 'running' ? 'polite' : 'off'">
     <span :class="dotClass" :aria-label="statusText" />
     <span class="task-status-indicator__label">{{ statusText }}</span>
-    <span v-if="showElapsed" class="task-status-indicator__elapsed">{{ formatElapsed(elapsed!) }}</span>
+    <span v-if="showElapsed" class="task-status-indicator__elapsed">{{ displayElapsed }}</span>
   </div>
 </template>
 

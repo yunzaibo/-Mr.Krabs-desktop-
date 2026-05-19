@@ -60,6 +60,11 @@ describe('TaskStatusIndicator', () => {
     expect(wrapper.text()).toContain('42s')
   })
 
+  it('displays string elapsed directly from projection', () => {
+    const wrapper = mountIndicator({ status: 'running', elapsed: '3m 15s' })
+    expect(wrapper.text()).toContain('3m 15s')
+  })
+
   it('hides elapsed time when status is not running', () => {
     const wrapper = mountIndicator({ status: 'completed', elapsed: 42 })
     expect(wrapper.text()).not.toContain('42s')
