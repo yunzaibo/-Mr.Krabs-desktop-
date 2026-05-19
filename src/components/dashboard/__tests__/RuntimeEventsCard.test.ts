@@ -13,8 +13,8 @@ describe('RuntimeEventsCard', () => {
     const wrapper = mount(RuntimeEventsCard, {
       props: {
         events: [
-          { type: 'task.completed', taskId: '1', timestamp: new Date().toISOString() },
-          { type: 'task.created', taskId: '2', timestamp: new Date().toISOString() },
+          { id: 'e1', type: 'task.completed', taskId: '1', timestamp: new Date().toISOString() },
+          { id: 'e2', type: 'task.created', taskId: '2', timestamp: new Date().toISOString() },
         ],
       },
     })
@@ -33,7 +33,8 @@ describe('RuntimeEventsCard', () => {
 
   it('limits display to 5 events', () => {
     const events = Array.from({ length: 10 }, (_, i) => ({
-      type: `event.${i}`,
+      id: `e${i}`,
+      type: `task.completed` as const,
       taskId: `${i}`,
       timestamp: new Date().toISOString(),
     }))
@@ -49,7 +50,7 @@ describe('RuntimeEventsCard', () => {
     const wrapper = mount(RuntimeEventsCard, {
       props: {
         events: [
-          { type: 'execution.completed', taskId: '1', timestamp: now },
+          { id: 'e1', type: 'execution.completed', taskId: '1', timestamp: now },
         ],
       },
     })

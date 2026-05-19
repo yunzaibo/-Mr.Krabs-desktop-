@@ -58,8 +58,8 @@ describe('RuntimeHealthCard', () => {
           activeTasks: 0,
           failedToday: 3,
           recoveries: [
-            { taskId: '1', resolution: 'failed' },
-            { taskId: '2', resolution: 'pending' },
+            { taskId: '1', failureType: 'transient', assessmentState: 'unrecoverable', resolution: 'failed' },
+            { taskId: '2', failureType: 'permanent', assessmentState: 'recoverable', resolution: 'pending' },
           ],
         },
       },
