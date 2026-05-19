@@ -1,3 +1,5 @@
+import type { ResultSurfaceKind } from './resultSurface'
+
 /**
  * TaskCard is RuntimeTask's Chat Projection, NOT a new ChatMessage type.
  * P0: carried via ChatMessage.metadata as transitional projection.
@@ -10,7 +12,7 @@ export interface TaskCardMetadata {
   skillName: string
   status: 'running' | 'completed' | 'failed' | 'cancelled'
   elapsed?: number
-  resultKind?: 'text' | 'summary' | 'bullet'
+  resultKind?: ResultSurfaceKind
   /** P0: from text result content; P1+: should come from Task Result Projection */
   resultPreview?: string
   lastEvent?: string

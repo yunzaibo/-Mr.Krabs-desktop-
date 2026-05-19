@@ -3,7 +3,10 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { RefreshCw } from 'lucide-vue-next'
+import { useDashboardRuntime } from '@/composables/useDashboardRuntime'
+import { RefreshCw, Activity } from 'lucide-vue-next'
+import RuntimeEventsCard from '@/components/dashboard/RuntimeEventsCard.vue'
+import RuntimeHealthCard from '@/components/dashboard/RuntimeHealthCard.vue'
 import PageToolbar from '@/components/common/PageToolbar.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SegmentedControl from '@/components/common/SegmentedControl.vue'
@@ -11,6 +14,7 @@ import SegmentedControl from '@/components/common/SegmentedControl.vue'
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
+const runtime = useDashboardRuntime()
 
 const dashTab = ref('today')
 const dashTabs = computed(() => [
@@ -35,6 +39,13 @@ const stats = ref({
 const loading = ref(true)
 const lastRefreshed = ref<Date | null>(null)
 const countdown = ref(30)
+
+// ── Runtime 数据（响应式，无需轮询） ──────────────
+const runtimeStats = computed(() => ({
+  activeTasks: runtime.activeTaskCount.value,
+  completedToday: runtime.completedTodayCount.value,
+  failedToday: runtime.failedTodayCount.value,
+}))
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -156,6 +167,8 @@ async function fetchStats() {
     const llmRes = await safeFetch(() => getLLMConfig(), 'llm-config')
     stats.value.llmProviders = Object.keys(llmRes?.providers || {}).length
   } finally {
+    // 从 Runtime 数据填充 tasksRunToday（替代硬编码 0）
+    stats.value.tasksRunToday = runtime.completedTodayCount.value + runtime.failedTodayCount.value
     loading.value = false
     lastRefreshed.value = new Date()
     countdown.value = 30
@@ -275,6 +288,42 @@ function navigateTo(path: string) {
         </div>
       </div>
 
+      <!-- Runtime Status Bar -->
+      <div class="hc-dash__runtime-bar">
+        <div class="hc-dash__runtime-item">
+          <Activity :size="12" class="hc-dash__runtime-icon hc-dash__runtime-icon--active" />
+          <span class="hc-dash__runtime-label">{{ t('dashboard.activeTasks', 'Active') }}</span>
+          <span class="hc-dash__runtime-value">{{ runtimeStats.activeTasks }}</span>
+        </div>
+        <div class="hc-dash__runtime-item">
+          <span class="hc-dash__runtime-dot hc-dash__runtime-dot--success" />
+          <span class="hc-dash__runtime-label">{{ t('dashboard.completedToday', 'Completed') }}</span>
+          <span class="hc-dash__runtime-value">{{ runtimeStats.completedToday }}</span>
+        </div>
+        <div class="hc-dash__runtime-item">
+          <span class="hc-dash__runtime-dot hc-dash__runtime-dot--error" />
+          <span class="hc-dash__runtime-label">{{ t('dashboard.failedToday', 'Failed') }}</span>
+          <span class="hc-dash__runtime-value">{{ runtimeStats.failedToday }}</span>
+        </div>
+        <button
+          class="hc-dash__runtime-link"
+          @click="navigateTo('/runtime')"
+        >
+          {{ t('dashboard.viewRuntime', 'View Runtime') }}
+          →
+        </button>
+      </div>
+
+      <!-- Empty State: no tasks today -->
+      <div v-if="runtimeStats.activeTasks === 0 && runtimeStats.completedToday === 0 && runtimeStats.failedToday === 0" class="hc-dash__empty-runtime">
+        <div class="hc-dash__empty-runtime-text">
+          {{ t('dashboard.noTasksYet', 'No tasks run yet today. Start a chat or automation to get going.') }}
+        </div>
+        <button class="hc-dash__empty-runtime-btn" @click="navigateTo('/chat')">
+          {{ t('dashboard.startChat', 'Start Chat') }}
+        </button>
+      </div>
+
       <div class="hc-dash__grid-equal">
         <!-- Recent Activity -->
         <div class="hc-dash__card">
@@ -320,6 +369,12 @@ function navigateTo(path: string) {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Runtime Health + Events Row -->
+      <div class="hc-dash__grid-equal">
+        <RuntimeHealthCard :health="runtime.healthStatus.value" />
+        <RuntimeEventsCard :events="runtime.recentEvents.value" />
       </div>
     </div>
   </div>
@@ -531,5 +586,106 @@ function navigateTo(path: string) {
 /* ── Spin ── */
 .hc-spin-icon {
   animation: hc-spin 1s linear infinite;
+}
+
+/* ── Runtime Status Bar ── */
+.hc-dash__runtime-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  background: var(--hc-bg-card);
+  border: 1px solid var(--hc-border);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.hc-dash__runtime-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hc-dash__runtime-icon {
+  color: var(--hc-text-muted);
+}
+
+.hc-dash__runtime-icon--active {
+  color: var(--hc-accent);
+}
+
+.hc-dash__runtime-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.hc-dash__runtime-dot--success {
+  background: var(--hc-success, #22c55e);
+}
+
+.hc-dash__runtime-dot--error {
+  background: var(--hc-error, #ef4444);
+}
+
+.hc-dash__runtime-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--hc-text-muted);
+}
+
+.hc-dash__runtime-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  color: var(--hc-text-primary);
+}
+
+.hc-dash__runtime-link {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--hc-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.hc-dash__runtime-link:hover {
+  opacity: 0.7;
+}
+
+/* ── Empty Runtime State ── */
+.hc-dash__empty-runtime {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--hc-bg-card);
+  border: 1px dashed var(--hc-border);
+  border-radius: 10px;
+}
+
+.hc-dash__empty-runtime-text {
+  font-size: 12px;
+  color: var(--hc-text-muted);
+}
+
+.hc-dash__empty-runtime-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--hc-accent);
+  background: var(--hc-accent);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.hc-dash__empty-runtime-btn:hover {
+  opacity: 0.85;
 }
 </style>
