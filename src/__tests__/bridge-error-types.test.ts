@@ -174,3 +174,41 @@ describe('BRIDGE_TO_API_MAP snapshot', () => {
     expect(results).toMatchSnapshot()
   })
 })
+
+// ─── canTransition tests ───
+
+describe('canTransition', () => {
+  const legalTransitions: Array<[string, string]> = [
+    ['idle', 'preparing'],
+    ['preparing', 'running'],
+    ['running', 'completed'],
+    ['running', 'failed'],
+  ]
+
+  const illegalTransitions: Array<[string, string]> = [
+    ['completed', 'running'],
+    ['completed', 'preparing'],
+    ['completed', 'idle'],
+    ['failed', 'running'],
+    ['failed', 'preparing'],
+    ['failed', 'idle'],
+    ['running', 'preparing'],
+    ['running', 'idle'],
+    ['preparing', 'idle'],
+    ['preparing', 'completed'],
+  ]
+
+  legalTransitions.forEach(([from, to]) => {
+    it(`allows ${from} → ${to}`, async () => {
+      const { canTransition } = await import('@/types/execution')
+      expect(canTransition(from as any, to as any)).toBe(true)
+    })
+  })
+
+  illegalTransitions.forEach(([from, to]) => {
+    it(`rejects ${from} → ${to}`, async () => {
+      const { canTransition } = await import('@/types/execution')
+      expect(canTransition(from as any, to as any)).toBe(false)
+    })
+  })
+})
