@@ -44,6 +44,7 @@ export interface WorkspaceContextProjection {
   task: {
     goal?: string
     status: string
+    elapsed?: string           // "12s" / "3m" / "1h"
     progress?: number
     skillName?: string         // 技能名称（来自 SkillLayer.skillName）
     inputSummary?: string     // ≤100 chars
