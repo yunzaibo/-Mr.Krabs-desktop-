@@ -24,7 +24,20 @@
 
 A desktop workspace where AI Agents run persistently via natural language. Fully private, zero cloud dependency, native cross-platform experience.
 
-Core idea: **Chat is just the entry point; Workspace is where real work happens.** Users start tasks with natural language, the system runs persistently in a local Runtime, and context, assets, and execution state survive across sessions.
+## What Problem Are We Solving
+
+The current AI Agent ecosystem has a fundamental gap: **there is no real Runtime OS**.
+
+- Chat UIs are just Q&A windows — they cannot carry the running state of real tasks
+- Agents lack runtime observability — users have no idea what's executing, what's being reasoned, what tool results look like
+- Context windows are fundamentally limited, but tasks and data are unbounded
+- Long-term memory is prone to distortion, forgetting, and context eviction
+- Workflow/BPMN systems become over-engineered, complex, and fragile
+- Cloud-based agents raise data security and privacy concerns
+
+**Mr.Krabs Desktop is not a chatbot, not a Workflow Builder — it is a Local-first AI Runtime Workspace.**
+
+Users start tasks with natural language. The system runs persistently in a local Runtime. Context, assets, and execution state survive across sessions. All data stays under user control.
 
 ## Key Technical Capabilities
 
@@ -39,6 +52,77 @@ Core idea: **Chat is just the entry point; Workspace is where real work happens.
 | **Knowledge Base RAG** | Document parsing → vector retrieval → Auto-RAG context injection | Let agents answer from user's private knowledge, not just training data |
 | **Memory System** | Long-term + short-term memory, semantic search, cross-session persistence | Agents remember user preferences and history, improving over time |
 | **Multimodal Generation** | Unified ChatInput routes to gpt-image-2 (image) / video-gen 2.0 by model capability; results stored locally with URL references | Single chat UI covers text, image, and video generation; generated assets persist in local Runtime, no cloud storage dependency |
+
+## Engineering Challenges
+
+### Context Explosion
+
+LLM context windows are fundamentally limited, while user tasks are unbounded. Naive truncation or summary compression causes memory loss, task drift, hallucination, and unstable long-running agents.
+
+Mr.Krabs explores:
+
+| Strategy | Implementation |
+| --- | --- |
+| **Layered Memory** | Working memory (current task state) + short-term memory (conversation history) + long-term memory (persistent storage), managed by lifecycle |
+| **RAG Retrieval** | Don't stuff everything into the window — retrieve relevant content from local vector store on demand |
+| **Summary Compression** | Summarize conversation history, preserve key information, discard details |
+| **Local-first Persistence** | State stored locally, no cloud dependency, survives across sessions |
+
+### Cost Control
+
+AI APIs charge per token. Multi-agent parallelism can cause costs to spiral.
+
+Mr.Krabs approaches this with:
+
+- **3D Budget System** (token / time / cost): per-Task limits, checked before every LLM call, auto-terminate + rollback on exceed
+- **Checkpoint Mechanism**: long-task resume without re-computation
+- **Local Inference**: Ollama and other local models for zero API cost
+
+### Reliability & Fault Tolerance
+
+LLM outputs are non-deterministic — the same question may yield different answers, wrong formats, or hallucinations. Building deterministic systems on top of non-deterministic components is the core engineering challenge of AI applications.
+
+Mr.Krabs addresses this with:
+
+- **Security Gateway**: 5-layer defense (prompt injection detection / tool output sanitization / PII filtering / RBAC / SSRF protection)
+- **Agent Budget Guardrails**: prevent runaway agent consumption
+- **Skill Sandbox**: `skill_sandbox.rs` restricted mode cleans env vars, limits directory access, enforces timeouts
+- **Deterministic Engineering**: prefer rules and validation over hoping the model "guesses right"
+
+### Runtime Observability
+
+Most AI agents are black boxes — users cannot observe execution state, intermediate reasoning, tool calls, or asset lifecycles.
+
+Mr.Krabs redesigns the interaction model:
+
+```
+Traditional:   Chat → Answer
+Mr.Krabs:      Chat → Task → Runtime → Workspace
+```
+
+Each Task runs persistently in the Runtime. Execution state, intermediate results, and tool calls are fully observable.
+
+### Skill Engineering
+
+Most AI workflow systems eventually degrade into BPMN-like node orchestration platforms — visually complex, hard to maintain, and unnatural for conversational interaction.
+
+Mr.Krabs believes skills should be:
+
+- **Lightweight**: a folder + `SKILL.md` + optional runtime assets
+- **Markdown-first**: define behavior in natural language, not drag-and-drop nodes
+- **Portable**: standardized `skill.json` package structure, shareable across community
+- **Runtime-oriented**: skills execute inside the Runtime, not as static configuration
+
+## Design Philosophy
+
+- **Chat is only the entry point** — the Runtime is where real work happens
+- **Runtime is the real product** — not a Q&A window, but a persistent task engine
+- **Explicit mutation over implicit magic** — state changes must be explicit, observable, auditable
+- **Local-first over cloud dependency** — all data and state under user control
+- **Skills over workflows** — lightweight, portable, Markdown-first, not node orchestration
+- **Runtime visibility over black-box automation** — execution state fully observable
+- **Deterministic engineering over prompt gambling** — rules and validation, not hoping the model "guesses right"
+- **Simplicity over complexity** — if a simple solution works, don't introduce complex abstractions
 
 ## Architecture
 
@@ -122,6 +206,52 @@ This repo is also a working log of **"building a shippable product with AI-assis
 | **Design-Driven** | Plan mode → multi-option comparison → ADR decisions, no "one-line-prompt-then-code" |
 | **Test Loop** | No "should pass" / "probably OK" — tests pass, grep scans for residue, then it's done |
 | **Multi-Agent Collab** | Claude codes / Codex reviews / Human decides — cross-review eliminates single-model blind spots |
+
+## Runtime Architecture
+
+```
+Cloud Control Plane
+├── License
+├── Skill Registry
+├── Analytics
+└── API Gateway
+
+Local Runtime Plane
+├── Chat Workspace          ← Natural language entry
+├── Task Runtime            ← Task execution engine
+├── Skill Runtime           ← Skill sandbox execution
+├── Context Runtime         ← Context management & RAG
+├── Memory Runtime          ← Layered memory system
+├── Asset Runtime           ← Asset generation & persistence
+├── Browser Runtime         ← Browser automation
+└── Security Gateway        ← 5-layer security defense
+```
+
+## Current Research Areas
+
+Ongoing engineering directions this project explores:
+
+- Context Engineering
+- Long-term Memory Systems
+- Runtime Observability
+- Local-first AI Architecture
+- Capability Runtime
+- Skill Packaging Protocol
+- Runtime Persistence & Recovery
+- Browser Automation Runtime
+- AI-native Workspace Interaction
+
+## This Project Is NOT
+
+- Not a chatbot wrapper
+- Not a low-code workflow builder
+- Not a BPMN orchestration system
+- Not an AutoGPT clone
+- Not a prompt collection tool
+
+This project explores:
+
+> **AI-native Runtime Systems** — building reliable deterministic systems on top of LLM non-determinism.
 
 ## Installation
 

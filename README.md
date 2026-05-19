@@ -24,7 +24,20 @@
 
 一个用自然语言驱动本地 AI Agent 持续运行的桌面工作空间。数据完全私有，零云端依赖，跨平台原生体验。
 
-核心理念：**Chat 只是入口，Workspace 才是真正的工作空间**。用户用自然语言启动任务，系统在本地 Runtime 中持续运行，上下文、资产、执行状态跨会话持久化。
+## 我们在解决什么问题
+
+当前 AI Agent 生态存在一个根本性缺口：**没有真正的 Runtime OS**。
+
+- Chat UI 只是问答窗口，无法承载真实任务的运行状态
+- Agent 缺乏运行时可观测性 —— 执行到哪了、推理了什么、工具调用结果如何，用户一无所知
+- Context Window 天然有限，但任务和数据无限增长
+- 长期记忆容易失真、遗忘、上下文挤出窗口
+- 工作流/BPMN 系统过度低代码化，复杂且脆弱
+- 云端 Agent 存在数据安全和隐私问题
+
+**Mr.Krabs Desktop 不是聊天机器人，不是 Workflow Builder，而是 Local-first AI Runtime Workspace。**
+
+用户用自然语言启动任务，系统在本地 Runtime 中持续运行，上下文、资产、执行状态跨会话持久化。数据完全由用户控制。
 
 ## 核心技术亮点
 
@@ -39,6 +52,77 @@
 | **知识库 RAG** | 文档解析 → 向量检索 → Auto-RAG 自动注入上下文 | 让 Agent 基于用户私有知识回答，而非仅依赖模型训练数据 |
 | **记忆系统** | 长期 + 短期记忆，语义搜索，跨会话持久化 | Agent 记住用户偏好和历史上下文，越用越懂你 |
 | **多模态生成** | 统一 ChatInput 入口，按模型 capability 自动路由 gpt-image-2（图像）/ 视频生成 2.0，结果本地落盘 + URL 引用 | 一套对话界面覆盖文本、图像、视频生成；生成资产持久化到本地 Runtime，不依赖云端存储 |
+
+## Engineering Challenges
+
+### Context Explosion
+
+LLM 上下文窗口有限，但用户任务和对话历史无限增长。简单截断或摘要压缩会导致记忆丢失、任务漂移、幻觉、长运行 Agent 不稳定。
+
+Mr.Krabs 的方案：
+
+| 策略 | 实现 |
+| --- | --- |
+| **分层记忆** | 工作记忆（当前任务状态）+ 短期记忆（对话历史）+ 长期记忆（持久化存储），按生命周期分层管理 |
+| **RAG 检索** | 不把所有信息塞进窗口，按需从本地向量库检索相关内容注入上下文 |
+| **摘要压缩** | 对历史对话做摘要，保留关键信息，丢弃细节 |
+| **本地优先持久化** | 状态存本地，不依赖云端，跨会话保留 |
+
+### 成本控制
+
+AI API 按 token 计费，多 Agent 并行时成本容易失控。
+
+Mr.Krabs 的方案：
+
+- **三维预算系统**（token / 时间 / 金额）：在 Task 粒度设置上限，每次 LLM 调用前检查，超限自动终止并回滚
+- **Checkpoint 机制**：长任务断点恢复，避免重复消耗
+- **本地推理**：支持 Ollama 等本地模型，零 API 成本
+
+### 可靠性与容错
+
+LLM 输出不稳定 —— 同一问题可能返回不同答案，格式甚至不符合预期。在不确定性之上构建确定性，是 AI 工程化的核心挑战。
+
+Mr.Krabs 的方案：
+
+- **安全网关**：五层防御（Prompt 注入检测 / 工具输出清洗 / PII 过滤 / RBAC / SSRF 防护）
+- **Agent 协作预算兜底**：防止 Agent 失控消耗
+- **Skill 沙箱**：`skill_sandbox.rs` 的 restricted 模式限制目录访问、清理环境变量、强制超时
+- **确定性工程**：优先用规则和校验，不依赖模型"猜对"
+
+### 运行时可观测性
+
+大多数 AI Agent 像黑盒 —— 用户无法观察执行状态、中间推理、工具调用、资产生命周期。
+
+Mr.Krabs 重新定义交互模型：
+
+```
+传统:  Chat → Answer
+Mr.Krabs: Chat → Task → Runtime → Workspace
+```
+
+每个 Task 在 Runtime 中持续运行，执行状态、中间结果、工具调用全程可观察。
+
+### Skill 工程
+
+大多数 AI 工作流系统最终退化为 BPMN-like 节点编排平台 —— 视觉复杂、维护困难、不适合自然语言交互。
+
+Mr.Krabs 相信 Skill 应该：
+
+- **轻量**：一个文件夹 + `SKILL.md` + 可选运行时资产
+- **Markdown-first**：用自然语言定义行为，不是拖拽节点
+- **可移植**：标准化 `skill.json` 包结构，社区可共享
+- **运行时导向**：Skill 在 Runtime 中执行，不是静态配置
+
+## Design Philosophy
+
+- **Chat is only the entry point** — 运行时才是真正的工作空间
+- **Runtime is the real product** — 不是问答窗口，是持续运行的任务引擎
+- **Explicit mutation over implicit magic** — 状态变更必须明确、可观察、可审计
+- **Local-first over cloud dependency** — 数据和状态完全由用户控制
+- **Skills over workflows** — 轻量、可移植、Markdown-first，而非节点编排
+- **Runtime visibility over black-box automation** — 执行状态全程可观察
+- **Deterministic engineering over prompt gambling** — 用规则和校验，不依赖模型"猜对"
+- **Simplicity over complexity** — 能用简单方案解决的，绝不引入复杂抽象
 
 ## 架构
 
@@ -121,6 +205,52 @@ Tauri 二进制约 5MB（Electron 约 150MB），内存占用低 3-5 倍。Rust 
 | **设计驱动** | Plan 模式 → 多方案对比 → ADR 决策，不做"一句话 + 秒出代码" |
 | **测试闭环** | 不接受 "should pass" / "probably OK"——测试跑过、grep 扫过残留才算完成 |
 | **多 Agent 协作** | Claude 写代码 / Codex 审代码 / 人类决策，交叉审查消除单模型盲区 |
+
+## Runtime Architecture
+
+```
+Cloud Control Plane
+├── License
+├── Skill Registry
+├── Analytics
+└── API Gateway
+
+Local Runtime Plane
+├── Chat Workspace          ← 自然语言入口
+├── Task Runtime            ← 任务执行引擎
+├── Skill Runtime           ← Skill 沙箱执行
+├── Context Runtime         ← 上下文管理与 RAG
+├── Memory Runtime          ← 分层记忆系统
+├── Asset Runtime           ← 资产生成与持久化
+├── Browser Runtime         ← 浏览器自动化
+└── Security Gateway        ← 五层安全防御
+```
+
+## Current Research Areas
+
+本项目持续探索的工程方向：
+
+- 上下文工程（Context Engineering）
+- 长期记忆系统（Long-term Memory Systems）
+- 运行时可观测性（Runtime Observability）
+- 本地优先 AI 架构（Local-first AI Architecture）
+- 能力运行时（Capability Runtime）
+- Skill 打包协议（Skill Packaging Protocol）
+- 运行时持久化与恢复（Runtime Persistence & Recovery）
+- 浏览器自动化运行时（Browser Automation Runtime）
+- AI 原生工作空间交互（AI-native Workspace Interaction）
+
+## This Project Is NOT
+
+- 不是聊天机器人包装器（chatbot wrapper）
+- 不是低代码工作流构建器（low-code workflow builder）
+- 不是 BPMN 编排系统（BPMN orchestration system）
+- 不是 AutoGPT 克隆
+- 不是 Prompt 集合工具
+
+本项目探索的是：
+
+> **AI-native Runtime Systems** — 在 LLM 的不确定性之上，构建可靠的确定性系统。
 
 ## 安装
 
