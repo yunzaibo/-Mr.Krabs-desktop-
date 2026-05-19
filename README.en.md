@@ -52,6 +52,8 @@ Users start tasks with natural language. The system runs persistently in a local
 | **Knowledge Base RAG** | Document parsing → vector retrieval → Auto-RAG context injection | Let agents answer from user's private knowledge, not just training data |
 | **Memory System** | Long-term + short-term memory, semantic search, cross-session persistence | Agents remember user preferences and history, improving over time |
 | **Multimodal Generation** | Unified ChatInput routes to gpt-image-2 (image) / video-gen 2.0 by model capability; results stored locally with URL references | Single chat UI covers text, image, and video generation; generated assets persist in local Runtime, no cloud storage dependency |
+| **Runtime Live Status** | TaskStatusIndicator pulse indicator + elapsed timer, Vue reactivity driven, CSS-only animations | Running tasks at a glance, 20+ concurrent tasks without frame drops |
+| **Recovery Action UI** | RecoveryActionPanel retry/reset actions, confirmation dialog, isExecuting state lock | Failed tasks recoverable with one click, action loop without leaving Workspace |
 
 ## Engineering Challenges
 

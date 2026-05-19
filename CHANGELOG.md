@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.5.0 (2026-05-19)
+
+### Runtime 增强 — Task 实时状态 + Recovery 操作界面
+
+Phase 6 MVP：为 Workspace 三面板视图添加运行时可观测性和操作闭环。
+
+#### F-001: Task Real-time Status
+- **TaskStatusIndicator 组件**：脉冲圆点 + 状态文本 + 已用时间计数器，ARIA `role="status"` 无障碍支持
+- **hc-live-pulse CSS 动画**：GPU 加速 `box-shadow` 脉冲，支持 5 种语义颜色通道（running/failed/pending/muted/error）
+- **TaskCard 状态徽章增强**：运行中任务显示脉冲圆点指示器
+- **ContextDetailPanel 集成**：替换静态 KeyValueRow，实时反映任务状态
+
+#### F-002: Recovery Action UI
+- **RecoveryActionPanel 组件**：恢复状态卡片 + 重试/重置操作按钮，9 个单元测试覆盖
+- **Recovery Projection**：`useWorkspace` composable 新增 `selectedRecoveryProjection`，投影 recovery summary + resolution state + corruption report
+- **ContextDetailPanel 集成**：Health section 后显示 Recovery 操作面板
+- **确认对话框**：重置上下文等破坏性操作需用户确认
+
+#### 工程
+- `prefers-reduced-motion` 媒体查询覆盖所有循环动画
+- i18n 字符串 zh-CN / en 双语同步
+- 216 个测试文件，3807 个测试全通过，0 回归
+
+#### 文件变更
+- 新增 `src/components/workspace/TaskStatusIndicator.vue`
+- 新增 `src/components/workspace/RecoveryActionPanel.vue`
+- 新增 2 个测试文件（17 个测试）
+- 修改 `src/assets/styles/global.css`：hc-live-pulse 动画
+- 修改 `src/components/chat/TaskCard.vue`：脉冲圆点
+- 修改 `src/components/workspace/ContextDetailPanel.vue`：状态 + Recovery 集成
+- 修改 `src/composables/useWorkspace.ts`：recovery projection
+- 修改 `src/types/workspace.ts`：elapsed + recovery 类型
+- 修改 `src/i18n/locales/zh-CN.ts` + `en.ts`：status + recovery 字符串
+
 ## v0.4.2 (2026-05-18)
 
 ### Skill 目录导入 + 自定义 skill NL 触发

@@ -52,6 +52,8 @@
 | **知识库 RAG** | 文档解析 → 向量检索 → Auto-RAG 自动注入上下文 | 让 Agent 基于用户私有知识回答，而非仅依赖模型训练数据 |
 | **记忆系统** | 长期 + 短期记忆，语义搜索，跨会话持久化 | Agent 记住用户偏好和历史上下文，越用越懂你 |
 | **多模态生成** | 统一 ChatInput 入口，按模型 capability 自动路由 gpt-image-2（图像）/ 视频生成 2.0，结果本地落盘 + URL 引用 | 一套对话界面覆盖文本、图像、视频生成；生成资产持久化到本地 Runtime，不依赖云端存储 |
+| **Runtime 实时状态** | TaskStatusIndicator 脉冲指示器 + 已用时间计数器，Vue reactivity 驱动，CSS-only 动画 | 运行中任务一目了然，20+ 并发任务无帧率下降 |
+| **Recovery 操作界面** | RecoveryActionPanel 重试/重置操作，确认对话框保护，isExecuting 状态锁 | 失败任务可一键恢复，操作闭环不离开 Workspace |
 
 ## Engineering Challenges
 
