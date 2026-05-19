@@ -114,23 +114,31 @@ export function useDashboardRuntime() {
 
   /** Dashboard 统计指标 */
   const dashboardMetrics = computed<DashboardMetrics>(() => {
-    const completed = taskStore.completedTasks || []
-    const failed = taskStore.failedTasks || []
+    const allTasks = taskStore.completedTasks || []
+    const completed = allTasks.filter((t) => t.status === 'completed')
+    const failed = allTasks.filter((t) => t.status === 'failed')
     const total = completed.length + failed.length
 
     const now = new Date()
     const tasksPerDay = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(now)
       date.setDate(date.getDate() - (6 - i))
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = date.toISOString().split('T')[0] ?? ''
       return {
         date: dateStr,
-        completed: completed.filter((t) => t.completedAt?.startsWith(dateStr)).length,
-        failed: failed.filter((t) => t.failedAt?.startsWith(dateStr)).length,
+        completed: completed.filter((t) => t.metadata?.completedAt?.startsWith(dateStr)).length,
+        failed: failed.filter((t) => t.metadata?.completedAt?.startsWith(dateStr)).length,
       }
     })
 
-    const durations = completed.filter((t) => t.duration).map((t) => t.duration)
+    // Use metadata.completedAt timestamps to compute duration between start and completion
+    const durations = completed
+      .filter((t) => t.metadata?.completedAt)
+      .map((t) => {
+        const completedAt = new Date(t.metadata!.completedAt!).getTime()
+        const createdAt = new Date(t.metadata?.createdAt || t.id).getTime()
+        return Math.max(0, (completedAt - createdAt) / 1000)
+      })
     const avgCompletionTime = durations.length > 0
       ? durations.reduce((a: number, b: number) => a + b, 0) / durations.length
       : 0

@@ -90,8 +90,19 @@ vi.mock('@/components/common/SegmentedControl.vue', () => ({
   default: { name: 'SegmentedControl', template: '<div class="mock-seg" />', props: ['modelValue', 'segments'] },
 }))
 
+// Mock ofetch and env to prevent RPC errors in test environment
+vi.mock('ofetch', () => ({
+  ofetch: { create: vi.fn().mockReturnValue(vi.fn().mockResolvedValue({})) },
+}))
+vi.mock('@/config/env', () => ({
+  env: { API_BASE_URL: 'http://localhost:16060', apiBase: 'http://localhost:16060', timeout: 30000 },
+}))
+
 // Mock API calls so fetchStats doesn't fail
-vi.mock('@/api/client', () => ({ apiGet: vi.fn().mockResolvedValue({}) }))
+vi.mock('@/api/client', () => ({
+  apiGet: vi.fn().mockResolvedValue({}),
+  api: { get: vi.fn().mockResolvedValue({}), post: vi.fn().mockResolvedValue({}) },
+}))
 vi.mock('@/api/chat', () => ({ listSessions: vi.fn().mockResolvedValue({ sessions: [] }) }))
 vi.mock('@/api/agents', () => ({ getRoles: vi.fn().mockResolvedValue({ roles: [] }) }))
 vi.mock('@/api/mcp', () => ({ getMcpServers: vi.fn().mockResolvedValue({ servers: [] }) }))

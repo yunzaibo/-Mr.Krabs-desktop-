@@ -178,12 +178,10 @@ describe('useDashboardRuntime', () => {
       activeCount: 0,
       activeTasks: [],
       completedTasks: [
-        { id: '1', completedAt: `${todayStr}T10:00:00Z`, duration: 120 },
-        { id: '2', completedAt: `${todayStr}T14:00:00Z`, duration: 180 },
-        { id: '3', completedAt: `${yesterdayStr}T09:00:00Z`, duration: 60 },
-      ],
-      failedTasks: [
-        { id: '4', failedAt: `${todayStr}T11:00:00Z` },
+        { id: '1', status: 'completed', metadata: { completedAt: `${todayStr}T10:00:00Z`, createdAt: `${todayStr}T09:58:00Z` } },
+        { id: '2', status: 'completed', metadata: { completedAt: `${todayStr}T14:00:00Z`, createdAt: `${todayStr}T13:57:00Z` } },
+        { id: '3', status: 'completed', metadata: { completedAt: `${yesterdayStr}T09:00:00Z`, createdAt: `${yesterdayStr}T08:59:00Z` } },
+        { id: '4', status: 'failed', metadata: { completedAt: `${todayStr}T11:00:00Z` } },
       ],
     } as any)
 
@@ -197,9 +195,9 @@ describe('useDashboardRuntime', () => {
     const metrics = dashboardMetrics.value
 
     expect(metrics.tasksPerDay).toHaveLength(7)
-    expect(metrics.tasksPerDay[6].date).toBe(todayStr)
-    expect(metrics.tasksPerDay[6].completed).toBe(2)
-    expect(metrics.tasksPerDay[6].failed).toBe(1)
+    expect(metrics.tasksPerDay[6]!.date).toBe(todayStr)
+    expect(metrics.tasksPerDay[6]!.completed).toBe(2)
+    expect(metrics.tasksPerDay[6]!.failed).toBe(1)
 
     const yesterdayEntry = metrics.tasksPerDay.find(d => d.date === yesterdayStr)
     expect(yesterdayEntry).toBeDefined()
@@ -216,11 +214,10 @@ describe('useDashboardRuntime', () => {
       activeCount: 0,
       activeTasks: [],
       completedTasks: [
-        { id: '1', duration: 100 },
-        { id: '2', duration: 200 },
-        { id: '3', duration: 300 },
+        { id: '1', status: 'completed', metadata: { completedAt: '2026-05-19T10:01:40Z', createdAt: '2026-05-19T10:00:00Z' } },
+        { id: '2', status: 'completed', metadata: { completedAt: '2026-05-19T10:03:20Z', createdAt: '2026-05-19T10:00:00Z' } },
+        { id: '3', status: 'completed', metadata: { completedAt: '2026-05-19T10:05:00Z', createdAt: '2026-05-19T10:00:00Z' } },
       ],
-      failedTasks: [],
     } as any)
 
     vi.mocked(useRuntimeStore).mockReturnValue({
@@ -245,12 +242,10 @@ describe('useDashboardRuntime', () => {
       activeCount: 0,
       activeTasks: [],
       completedTasks: [
-        { id: '1', duration: 100 },
-        { id: '2', duration: 200 },
-      ],
-      failedTasks: [
-        { id: '3' },
-        { id: '4' },
+        { id: '1', status: 'completed', metadata: { completedAt: '2026-05-19T10:01:40Z', createdAt: '2026-05-19T10:00:00Z' } },
+        { id: '2', status: 'completed', metadata: { completedAt: '2026-05-19T10:03:20Z', createdAt: '2026-05-19T10:00:00Z' } },
+        { id: '3', status: 'failed', metadata: { completedAt: '2026-05-19T11:00:00Z' } },
+        { id: '4', status: 'failed', metadata: { completedAt: '2026-05-19T12:00:00Z' } },
       ],
     } as any)
 
