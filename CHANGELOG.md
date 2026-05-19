@@ -1,5 +1,54 @@
 # Changelog
 
+## v0.7.0 (2026-05-19)
+
+### Features — G9 Asset UI 渲染
+
+为 Runtime Surface 添加 Asset 渲染、编辑和版本控制能力，支持图片、文件和 Markdown 文档的预览与交互。
+
+#### AssetResultCard 组件
+- **类型路由渲染**：按 `UIAssetType`（image/markdown/file）自动选择对应预览模式
+- **AssetRenderDTO 投影模型**：UI 层与存储层解耦，纯只读投影
+- **事件驱动通信**：emit open-lightbox / open-editor / open-version-history / download，无直接 store 访问
+
+#### ImageLightbox 全屏查看器
+- **Teleport 到 body**：覆盖层独立于组件树，`--hc-z-overlay` z-index
+- **键盘导航**：Escape 关闭 / Arrow 切图 / +/- 缩放，`prefers-reduced-motion` 适配
+- **画廊模式**：支持多图浏览，计数器显示当前位置
+
+#### MarkdownEditor 分栏编辑器
+- **三分栏模式**：Split / Edit / Preview 一键切换
+- **实时预览**：`marked` + `DOMPurify` sanitization，150ms debounce
+- **快捷键**：Ctrl+S 保存 / Escape 关闭
+
+#### VersionHistory 版本历史侧栏
+- **快照版本列表**：显示版本号、相对时间、描述
+- **一键恢复**：emit restore 事件，父组件处理恢复逻辑
+
+#### AssetToast 通知组件
+- **4 种变体**：success / error / warning / info，左侧色条标识
+- **ARIA 无障碍**：role="alert" + aria-live="polite"
+
+#### 工程
+- **atomicWrite**：temp-file-then-rename 防崩溃写入
+- **editLock**：30 分钟过期的元数据级编辑锁
+- **Pinia asset store**：注册表 + 版本历史 + 编辑会话 + Lightbox 状态管理
+- **安全修复**：MarkdownEditor DOMPurify XSS 防护、fileExists 使用 get_file_size
+- 8 个新组件/服务 + 8 个测试文件，29 个 G9 测试全部通过
+
+#### 文件变更
+- 新增 `src/components/chat/AssetResultCard.vue`
+- 新增 `src/components/chat/ImageLightbox.vue`
+- 新增 `src/components/chat/MarkdownEditor.vue`
+- 新增 `src/components/chat/VersionHistory.vue`
+- 新增 `src/components/chat/AssetToast.vue`
+- 新增 `src/services/assetStorage.ts`
+- 新增 `src/stores/assets.ts`
+- 新增 8 个测试文件（29 个测试）
+- 修改 `src/types/asset.ts`：UIAssetType + AssetRenderDTO + 工具函数
+- 修改 `src/components/chat/TaskCard.vue`：asset 渲染分支
+- 修改 `src/stores/index.ts`：useAssetStore 导出
+
 ## v0.6.0 (2026-05-19)
 
 ### Features — Runtime Timeline + Dashboard Analytics
