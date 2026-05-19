@@ -1728,6 +1728,25 @@ export default {
       taskId: 'Task ID',
       advanced: 'Details',
     },
+    status: {
+      running: 'Running',
+      pending: 'Pending',
+      completed: 'Completed',
+      failed: 'Failed',
+      cancelled: 'Cancelled',
+    },
+    recovery: {
+      title: 'Recovery',
+      tryAgain: 'Try again',
+      resetContext: 'Reset context',
+      dismiss: 'Dismiss',
+      lastChecked: 'Last checked',
+      recoverable: 'Recoverable',
+      unrecoverable: 'Unrecoverable',
+      corrupted: 'Corrupted',
+      confirmReset: 'Are you sure you want to reset the context? This will clear all recovery state.',
+      confirmDismiss: 'Are you sure you want to dismiss this failure?',
+    },
   },
 
   confirm: {
