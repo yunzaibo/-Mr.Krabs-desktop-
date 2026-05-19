@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.8.0 (2026-05-19)
+
+### Features — Error Boundary Formalization + WS/RT Semantic Drift Closure
+
+为 Runtime 错误处理建立完整的类型系统，关闭 WebSocket 路径与 Runtime 路径之间的语义漂移。
+
+#### BridgeError 类型系统
+- **BridgeErrorCode 枚举**：6 个 Runtime 层错误码（RT_TASK_FAILED, RT_NO_OUTPUT, RT_ILLEGAL_TRANSITION, RT_TIMEOUT, RT_CANCELLED, BRIDGE_INTERNAL）
+- **Branded type**：`BridgeError` 带 `__brand` 字段，编译时类型判别
+- **工厂 + 守卫**：`createBridgeError()` / `isBridgeError()` 类型安全构造与检测
+- **CANCELLED ApiErrorCode**：新增第 11 个 API 错误码，RT_CANCELLED 映射到 CANCELLED（非 SERVER_ERROR），不纳入 isRetryable
+
+#### WS/RT 语义对齐
+- **SSE 错误结构化**：apiSSE 空 body 抛出 ApiError 而非 `new Error()`，消除错误码丢失
+- **双重 fail 修复**：executeChatTask catch 块检测已转换的 ApiError 并直接 rethrow，避免 RT_NO_OUTPUT 分支触发双重 failTask
+- **安全错误提取**：catch 块使用 `instanceof Error` 安全取值，避免对非 Error 对象强转
+
+#### canTransition Guard
+- `canTransition()` 在非法状态转换时抛出 `RT_ILLEGAL_TRANSITION` BridgeError
+
+### Bug Fixes
+- fix(error): SSE 路径直接抛出 ApiError 而非丢失结构的 Error (9793dad)
+- fix(error): 修复 executeChatTask 双重 fail + apiSSE 混合错误类型 + catch 安全取值 (779ea37)
+
+### Testing
+- test(error): 新增 handleSendError 语义一致性测试 — WS/RT 两条路径产生相同错误码 (d68013a)
+- refactor(test): 改进测试代码质量 — 顶层导入、类型安全、工厂函数、断言统一 (bbab6b4)
+
 ## v0.7.0 (2026-05-19)
 
 ### Features — G9 Asset UI 渲染

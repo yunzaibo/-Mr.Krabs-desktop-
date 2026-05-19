@@ -22,6 +22,7 @@ import { TimelineStore } from '@/services/runtime/timelineStore'
 import { taskTimeline, recentEvents } from '@/services/runtime/timelineProjection'
 import { DEFAULT_BUDGET } from '@/types/runtimeBudget'
 import { canTransition } from '@/types/execution'
+import { createBridgeError } from '@/utils/errors'
 import { createContextAwareExecutor } from '@/services/taskExecutor'
 import { usePersistenceRuntime } from '@/composables/usePersistenceRuntime'
 import { useAssetRuntime } from '@/composables/useAssetRuntime'
@@ -394,7 +395,13 @@ export const useRuntimeStore = defineStore('runtime', () => {
 
     // 3. preparing → running
     if (!canTransition(ctx.execution!.state, 'running')) {
-      getRuntimeLogger().warn(`[Execution] 非法状态转换: ${ctx.execution!.state} → running`)
+      const err = createBridgeError({
+        code: 'RT_ILLEGAL_TRANSITION',
+        message: `非法状态转换: ${ctx.execution!.state} → running`,
+        cause: { from: ctx.execution!.state, to: 'running', taskId },
+      })
+      getRuntimeLogger().error(err.message, err)
+      throw err
     }
     ctx.execution!.state = 'running'
     writeTimelineEvent({ type: 'execution.started', taskId })
@@ -408,7 +415,13 @@ export const useRuntimeStore = defineStore('runtime', () => {
 
       // 5. running → completed
       if (!canTransition(ctx.execution!.state, 'completed')) {
-        getRuntimeLogger().warn(`[Execution] 非法状态转换: ${ctx.execution!.state} → completed`)
+        const err = createBridgeError({
+          code: 'RT_ILLEGAL_TRANSITION',
+          message: `非法状态转换: ${ctx.execution!.state} → completed`,
+          cause: { from: ctx.execution!.state, to: 'completed', taskId },
+        })
+        getRuntimeLogger().error(err.message, err)
+        throw err
       }
       ctx.execution!.state = 'completed'
       ctx.execution!.completedAt = new Date().toISOString()
@@ -430,7 +443,13 @@ export const useRuntimeStore = defineStore('runtime', () => {
       // 6. running → failed
       const message = (e as Error).message
       if (!canTransition(ctx.execution!.state, 'failed')) {
-        getRuntimeLogger().warn(`[Execution] 非法状态转换: ${ctx.execution!.state} → failed`)
+        const err = createBridgeError({
+          code: 'RT_ILLEGAL_TRANSITION',
+          message: `非法状态转换: ${ctx.execution!.state} → failed`,
+          cause: { from: ctx.execution!.state, to: 'failed', taskId },
+        })
+        getRuntimeLogger().error(err.message, err)
+        throw err
       }
       ctx.execution!.state = 'failed'
       ctx.execution!.currentStage = 'finalizing'

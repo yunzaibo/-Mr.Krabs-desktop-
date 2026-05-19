@@ -78,3 +78,4 @@ export type { Toast } from './ui'
 // ─── 通用类型 ────────────────────────────────────────
 
 export type { ApiError, ApiErrorCode } from './error'
+export type { BridgeError, BridgeErrorCode } from './error'

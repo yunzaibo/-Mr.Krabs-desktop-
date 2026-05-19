@@ -7,7 +7,7 @@
 
 import { ofetch } from 'ofetch'
 import { env } from '@/config/env'
-import { fromHttpStatus, fromNativeError, type ApiError } from '@/utils/errors'
+import { fromHttpStatus, fromNativeError, createApiError, type ApiError } from '@/utils/errors'
 import { logger } from '@/utils/logger'
 
 // ─── HTTP 客户端 (ofetch) ────────────────────────────
@@ -86,12 +86,11 @@ export async function apiSSE(
   })
 
   if (!response.ok) {
-    const apiErr = fromHttpStatus(response.status)
-    throw new Error(apiErr.message)
+    throw fromHttpStatus(response.status)
   }
 
   if (!response.body) {
-    throw new Error('SSE response body is empty')
+    throw createApiError('UNKNOWN', 'SSE response body is empty')
   }
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
