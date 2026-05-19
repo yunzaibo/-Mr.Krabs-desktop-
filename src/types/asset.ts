@@ -106,3 +106,106 @@ export interface AssetCollection {
    */
   lastUpdated: string
 }
+
+// ─── UI Rendering Types (G9 Asset UI) ───────────────────
+
+/** UI Asset 类型 — 用于渲染路由 */
+export type UIAssetType = 'image' | 'file' | 'markdown'
+
+/**
+ * AssetMeta — AssetResultCard 的简化输入 props。
+ * 与 AssetMetadata（存储层）分离，UI 层不依赖存储实现。
+ */
+export interface AssetMeta {
+  assetType: UIAssetType
+  fileName?: string
+  fileSize?: number
+  fileUrl?: string
+}
+
+/**
+ * AssetRenderDTO — UI 层投影模型。
+ * 从 AssetReference + AssetMetadata 派生，纯只读。
+ */
+export interface AssetRenderDTO {
+  assetId: string
+  assetType: UIAssetType
+  fileName: string
+  fileSizeFormatted: string
+  sizeBytes: number
+  mimeType: string
+  contentUrl?: string
+  editable: boolean
+  hasVersions: boolean
+  contentHash: string
+}
+
+// ─── Edit Lock ──────────────────────────────────────────
+
+/** 轻量级元数据锁 — 单用户桌面应用 */
+export interface EditLock {
+  locked: boolean
+  lockedAt?: string
+  lockedBy?: string
+}
+
+// ─── Version Control ────────────────────────────────────
+
+/** 快照版本 — 每次修改创建完整快照 */
+export interface SnapshotVersion {
+  versionNumber: number
+  createdAt: string
+  contentHash: string
+  description?: string
+  sizeBytes: number
+}
+
+/** 版本历史 — per-asset 版本记录 */
+export interface VersionHistory {
+  assetId: string
+  versions: SnapshotVersion[]
+  maxVersions: number
+}
+
+// ─── Editor State ───────────────────────────────────────
+
+/** 可编辑文档 — 编辑器打开时的运行时状态 */
+export interface EditableDocument {
+  assetId: string
+  content: string
+  originalHash: string
+  isDirty: boolean
+  openedAt: string
+}
+
+// ─── Lightbox State ─────────────────────────────────────
+
+/** Lightbox 运行时状态 */
+export interface LightboxState {
+  isOpen: boolean
+  currentAssetId: string | null
+  galleryIds: string[]
+  currentIndex: number
+}
+
+// ─── Utility Functions ──────────────────────────────────
+
+/**
+ * 格式化文件大小为人类可读字符串
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  const size = (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)
+  return `${size} ${units[i]}`
+}
+
+/**
+ * 根据 MIME type 分类 Asset 渲染类型
+ */
+export function classifyAssetType(mimeType: string): UIAssetType {
+  if (mimeType.startsWith('image/')) return 'image'
+  if (mimeType === 'text/markdown' || mimeType === 'text/x-markdown') return 'markdown'
+  return 'file'
+}
