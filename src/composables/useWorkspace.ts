@@ -17,7 +17,7 @@ import { useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { useRuntimeStore } from '@/stores/runtime'
 import { useTaskStore } from '@/stores/tasks'
 import { projectTask, projectContext, projectTimeline, projectTimelineNarrative, projectTaskResult } from '@/services/workspaceProjector'
-import type { WorkspaceTaskProjection, WorkspaceContextProjection, TimelineItemProjection, TimelineNarrativeGroup, TaskResultProjection } from '@/types/workspace'
+import type { WorkspaceTaskProjection, WorkspaceContextProjection, TimelineItemProjection, TimelineNarrativeGroup, TaskResultProjection, TimelineEventCategory } from '@/types/workspace'
 
 export function useWorkspace() {
   const runtimeStore = useRuntimeStore()
@@ -122,6 +122,30 @@ export function useWorkspace() {
     }
   })
 
+  // ── Filtered Timeline Projection ──────────────────
+
+  /** Timeline 事件分类过滤器 */
+  const timelineFilter = ref<TimelineEventCategory>('all')
+
+  /** 按分类过滤的 Timeline 投影（最多 200 条） */
+  const filteredTimelineProjection = computed(() => {
+    if (!selectedTaskId.value) return []
+    const rawEvents = runtimeStore.getTaskTimeline(selectedTaskId.value)
+    if (timelineFilter.value === 'all') return projectTimeline(rawEvents).slice(0, 200)
+
+    const categoryMap: Record<TimelineEventCategory, string[]> = {
+      all: [],
+      task: ['task.created', 'task.completed', 'task.failed', 'task.destroyed', 'execution.prepared', 'execution.started', 'execution.completed', 'execution.failed'],
+      context: ['context.created', 'layer.loaded', 'layer.unloaded'],
+      skill: ['skill.loaded', 'skill.loadFailed', 'skill.unloaded', 'capability.validated'],
+      recovery: ['recovery.assessed', 'recovery.corruption_detected', 'budget.warning'],
+    }
+
+    const allowedTypes = categoryMap[timelineFilter.value] || []
+    const filtered = rawEvents.filter(event => allowedTypes.includes(event.type))
+    return projectTimeline(filtered).slice(0, 200)
+  })
+
   // ── Actions ───────────────────────────────────────
 
   function selectTask(taskId: string | null) {
@@ -137,6 +161,8 @@ export function useWorkspace() {
     completedProjections,
     selectedContextProjection,
     selectedTimelineProjection,
+    timelineFilter,
+    filteredTimelineProjection,
     selectedNarrativeProjection,
     selectedResultProjection,
     selectedRecoveryProjection,
