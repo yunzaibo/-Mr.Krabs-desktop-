@@ -103,3 +103,35 @@ export function getErrorMessage(err: ApiError): string {
 export function messageFromUnknownError(err: unknown): string {
   return getErrorMessage(fromNativeError(err))
 }
+
+// ─── Bridge 层错误 ──────────────────────────────────────
+
+import type { BridgeError, BridgeErrorCode } from '@/types/error'
+
+/** 创建 Bridge 层结构化错误 */
+export function createBridgeError(params: {
+  code: BridgeErrorCode
+  message: string
+  cause?: unknown
+}): BridgeError {
+  return {
+    __brand: 'BridgeError',
+    code: params.code,
+    message: params.message,
+    cause: params.cause,
+  }
+}
+
+/** 类型守卫：判断是否为 BridgeError */
+export function isBridgeError(value: unknown): value is BridgeError {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '__brand' in value &&
+    (value as any).__brand === 'BridgeError' &&
+    'code' in value &&
+    typeof (value as any).code === 'string' &&
+    'message' in value &&
+    typeof (value as any).message === 'string'
+  )
+}
