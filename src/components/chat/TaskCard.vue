@@ -15,12 +15,12 @@ import MarkdownRenderer from './MarkdownRenderer.vue'
 import SummaryResultCard from './SummaryResultCard.vue'
 import BulletResultCard from './BulletResultCard.vue'
 import AssetResultCard from './AssetResultCard.vue'
-import type { AssetMeta } from './AssetResultCard.vue'
+import type { AssetRenderDTO } from '@/types/asset'
 
 const props = defineProps<TaskCardMetadata & {
   resultKind?: ResultSurfaceKind
   content?: string
-  assetMeta?: AssetMeta
+  asset?: AssetRenderDTO
 }>()
 
 const router = useRouter()
@@ -137,7 +137,7 @@ function openWorkspace() {
         <BulletResultCard :content="content || ''" />
       </template>
       <template v-else-if="status === 'completed' && resultKind === 'asset'">
-        <AssetResultCard :content="content || ''" :asset-meta="assetMeta" />
+        <AssetResultCard v-if="asset" :asset="asset" />
       </template>
       <div v-else-if="truncatedPreview" class="task-card__preview">
         <MarkdownRenderer :content="truncatedPreview" />
