@@ -112,6 +112,21 @@ export function useDashboardRuntime() {
     }
   })
 
+  /** 将 Date 格式化为本地 YYYY-MM-DD 字符串（避免 UTC 偏移） */
+  function toLocalDateStr(date: Date): string {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  /** 安全解析时间戳，无效时返回 NaN */
+  function safeTime(value: string | undefined | null): number {
+    if (!value) return NaN
+    const t = new Date(value).getTime()
+    return Number.isFinite(t) ? t : NaN
+  }
+
   /** Dashboard 统计指标 */
   const dashboardMetrics = computed<DashboardMetrics>(() => {
     const allTasks = taskStore.completedTasks || []
@@ -123,7 +138,7 @@ export function useDashboardRuntime() {
     const tasksPerDay = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(now)
       date.setDate(date.getDate() - (6 - i))
-      const dateStr = date.toISOString().split('T')[0] ?? ''
+      const dateStr = toLocalDateStr(date)
       return {
         date: dateStr,
         completed: completed.filter((t) => t.metadata?.completedAt?.startsWith(dateStr)).length,
@@ -131,14 +146,16 @@ export function useDashboardRuntime() {
       }
     })
 
-    // Use metadata.completedAt timestamps to compute duration between start and completion
     const durations = completed
       .filter((t) => t.metadata?.completedAt)
       .map((t) => {
-        const completedAt = new Date(t.metadata!.completedAt!).getTime()
-        const createdAt = new Date(t.metadata?.createdAt || t.id).getTime()
+        const completedAt = safeTime(t.metadata!.completedAt!)
+        const createdAt = safeTime(t.metadata?.createdAt)
+        if (!Number.isFinite(completedAt) || !Number.isFinite(createdAt)) return NaN
         return Math.max(0, (completedAt - createdAt) / 1000)
       })
+      .filter((d) => Number.isFinite(d))
+
     const avgCompletionTime = durations.length > 0
       ? durations.reduce((a: number, b: number) => a + b, 0) / durations.length
       : 0

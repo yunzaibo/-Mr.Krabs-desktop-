@@ -4,7 +4,9 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const props = defineProps<{ rate: number; total: number }>()
 
 const CIRCUMFERENCE = 2 * Math.PI * 40 // r=40
@@ -21,7 +23,7 @@ const gaugeClass = computed(() => {
 
 <template>
   <div class="hc-gauge" :class="gaugeClass">
-    <svg class="hc-gauge__svg" viewBox="0 0 100 100">
+    <svg class="hc-gauge__svg" viewBox="0 0 100 100" role="img" :aria-label="`${percentage}% ${t('dashboard.successRate', 'success rate')}`">
       <circle class="hc-gauge__track" cx="50" cy="50" r="40" />
       <circle
         class="hc-gauge__fill"
@@ -33,7 +35,7 @@ const gaugeClass = computed(() => {
     </svg>
     <div class="hc-gauge__overlay">
       <span class="hc-gauge__value">{{ percentage }}%</span>
-      <span class="hc-gauge__label">{{ total }} tasks</span>
+      <span class="hc-gauge__label">{{ total }} {{ t('dashboard.tasks', 'tasks') }}</span>
     </div>
   </div>
 </template>

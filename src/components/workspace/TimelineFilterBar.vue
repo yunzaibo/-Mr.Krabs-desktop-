@@ -6,7 +6,11 @@
  * 每个 chip 附带 count badge（count > 0 时显示）。
  * 无障碍：role="tablist" + role="tab"。
  */
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { TimelineEventCategory } from '@/types/workspace'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   filter: TimelineEventCategory
@@ -19,16 +23,21 @@ const emit = defineEmits<{
 
 interface FilterChip {
   key: TimelineEventCategory
-  label: string
+  labelKey: string
+  fallback: string
 }
 
-const chips: FilterChip[] = [
-  { key: 'all', label: 'All' },
-  { key: 'task', label: 'Task' },
-  { key: 'context', label: 'Context' },
-  { key: 'skill', label: 'Skill' },
-  { key: 'recovery', label: 'Recovery' },
+const chipDefs: FilterChip[] = [
+  { key: 'all', labelKey: 'timeline.filter.all', fallback: 'All' },
+  { key: 'task', labelKey: 'timeline.filter.task', fallback: 'Task' },
+  { key: 'context', labelKey: 'timeline.filter.context', fallback: 'Context' },
+  { key: 'skill', labelKey: 'timeline.filter.skill', fallback: 'Skill' },
+  { key: 'recovery', labelKey: 'timeline.filter.recovery', fallback: 'Recovery' },
 ]
+
+const chips = computed(() =>
+  chipDefs.map((c) => ({ key: c.key, label: t(c.labelKey, c.fallback) })),
+)
 
 function selectFilter(key: TimelineEventCategory) {
   emit('update:filter', key)
@@ -86,7 +95,7 @@ function selectFilter(key: TimelineEventCategory) {
 }
 
 .hc-filter-chip--active {
-  background: rgba(99, 102, 241, 0.1);
+  background: var(--hc-accent-subtle);
   border-color: var(--hc-accent);
   color: var(--hc-accent);
 }

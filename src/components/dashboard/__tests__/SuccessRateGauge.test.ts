@@ -1,9 +1,25 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
 import SuccessRateGauge from '../SuccessRateGauge.vue'
 
+vi.mock('vue-i18n', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vue-i18n')>()
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (_key: string, fallback?: string) => fallback ?? _key,
+    }),
+  }
+})
+
+const i18n = createI18n({ legacy: false, locale: 'en', fallbackLocale: 'en' })
+
 function createWrapper(rate: number, total = 100) {
-  return mount(SuccessRateGauge, { props: { rate, total } })
+  return mount(SuccessRateGauge, {
+    props: { rate, total },
+    global: { plugins: [i18n] },
+  })
 }
 
 describe('SuccessRateGauge', () => {

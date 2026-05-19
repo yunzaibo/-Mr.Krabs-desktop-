@@ -19,6 +19,15 @@ import { useTaskStore } from '@/stores/tasks'
 import { projectTask, projectContext, projectTimeline, projectTimelineNarrative, projectTaskResult } from '@/services/workspaceProjector'
 import type { WorkspaceTaskProjection, WorkspaceContextProjection, TimelineItemProjection, TimelineNarrativeGroup, TaskResultProjection, TimelineEventCategory } from '@/types/workspace'
 
+/** Timeline 事件分类映射（模块级常量，避免每次 computed 重建） */
+const CATEGORY_MAP: Record<TimelineEventCategory, string[]> = {
+  all: [],
+  task: ['task.created', 'task.completed', 'task.failed', 'task.destroyed', 'execution.prepared', 'execution.started', 'execution.completed', 'execution.failed'],
+  context: ['context.created', 'context.updated', 'layer.loaded', 'layer.unloaded'],
+  skill: ['skill.loaded', 'skill.loadFailed', 'skill.unloaded', 'capability.validated'],
+  recovery: ['recovery.assessed', 'recovery.corruption_detected', 'recovery.recovery_attempted', 'recovery.recovery_succeeded', 'recovery.recovery_failed', 'budget.warning', 'memory.updated', 'asset.invalidated'],
+}
+
 export function useWorkspace() {
   const runtimeStore = useRuntimeStore()
   const taskStore = useTaskStore()
@@ -133,15 +142,7 @@ export function useWorkspace() {
     const rawEvents = runtimeStore.getTaskTimeline(selectedTaskId.value)
     if (timelineFilter.value === 'all') return projectTimeline(rawEvents).slice(0, 200)
 
-    const categoryMap: Record<TimelineEventCategory, string[]> = {
-      all: [],
-      task: ['task.created', 'task.completed', 'task.failed', 'task.destroyed', 'execution.prepared', 'execution.started', 'execution.completed', 'execution.failed'],
-      context: ['context.created', 'layer.loaded', 'layer.unloaded'],
-      skill: ['skill.loaded', 'skill.loadFailed', 'skill.unloaded', 'capability.validated'],
-      recovery: ['recovery.assessed', 'recovery.corruption_detected', 'budget.warning'],
-    }
-
-    const allowedTypes = categoryMap[timelineFilter.value] || []
+    const allowedTypes = CATEGORY_MAP[timelineFilter.value] || []
     const filtered = rawEvents.filter(event => allowedTypes.includes(event.type))
     return projectTimeline(filtered).slice(0, 200)
   })

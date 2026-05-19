@@ -122,54 +122,61 @@ async function safeFetch<T>(fn: () => Promise<T>, label: string): Promise<T | nu
 
 async function fetchStats() {
   try {
-    const { apiGet } = await import('@/api/client')
-    const res = await safeFetch(
-      () => apiGet<Record<string, unknown>>('/api/v1/stats'),
-      'stats',
-    )
-    if (res) {
-      Object.assign(stats.value, res)
+    const [
+      { apiGet },
+      { listSessions },
+      { getRoles },
+      { getMcpServers },
+      { getMemoryEntries },
+      { getDocuments },
+      { getIMInstances },
+      { getLLMConfig },
+    ] = await Promise.all([
+      import('@/api/client'),
+      import('@/api/chat'),
+      import('@/api/agents'),
+      import('@/api/mcp'),
+      import('@/api/memory'),
+      import('@/api/knowledge'),
+      import('@/api/im-channels'),
+      import('@/api/config'),
+    ])
+
+    const [res, sessionRes, agentRes, mcpRes, memRes, kRes, imRes, llmRes] = await Promise.allSettled([
+      safeFetch(() => apiGet<Record<string, unknown>>('/api/v1/stats'), 'stats'),
+      safeFetch(() => listSessions({ limit: 200 }), 'sessions'),
+      safeFetch(() => getRoles(), 'agents'),
+      safeFetch(() => getMcpServers(), 'mcp'),
+      safeFetch(() => getMemoryEntries({ view: 'all', limit: 1 }), 'memory'),
+      safeFetch(() => getDocuments(), 'knowledge'),
+      safeFetch(() => getIMInstances(), 'im-channels'),
+      safeFetch(() => getLLMConfig(), 'llm-config'),
+    ])
+
+    if (res.status === 'fulfilled' && res.value) {
+      Object.assign(stats.value, res.value)
     }
 
-    const { listSessions } = await import('@/api/chat')
-    const sessionRes = await safeFetch(() => listSessions({ limit: 200 }), 'sessions')
-    const sessions = sessionRes?.sessions || []
+    const sessions = (sessionRes.status === 'fulfilled' ? sessionRes.value?.sessions : null) || []
     stats.value.totalSessions = sessions.length
-    const recent = sessions.slice(0, 3).map((s) => ({
-      id: s.id,
-      title: s.title || t('chat.newSessionDefault'),
+    recentActivity.value = sessions.slice(0, 3).map((s: Record<string, unknown>) => ({
+      id: s.id as string,
+      title: (s.title as string) || t('chat.newSessionDefault'),
       type: 'chat' as const,
-      time: s.updated_at,
+      time: s.updated_at as string,
     }))
-    recentActivity.value = recent
 
-    const { getRoles } = await import('@/api/agents')
-    const agentRes = await safeFetch(() => getRoles(), 'agents')
-    stats.value.activeAgents = agentRes?.roles?.length || 0
+    stats.value.activeAgents = (agentRes.status === 'fulfilled' ? agentRes.value?.roles?.length : null) || 0
+    stats.value.mcpServers = (mcpRes.status === 'fulfilled' ? mcpRes.value?.servers?.length : null) || 0
 
-    const { getMcpServers } = await import('@/api/mcp')
-    const mcpRes = await safeFetch(() => getMcpServers(), 'mcp')
-    stats.value.mcpServers = mcpRes?.servers?.length || 0
-
-    const { getMemoryEntries } = await import('@/api/memory')
-    const memRes = await safeFetch(() => getMemoryEntries({ view: 'all', limit: 1 }), 'memory')
-    if (memRes) {
-      stats.value.memoryEntries = memRes.total ?? memRes.entries.length
+    if (memRes.status === 'fulfilled' && memRes.value) {
+      stats.value.memoryEntries = memRes.value.total ?? memRes.value.entries.length
     }
 
-    const { getDocuments } = await import('@/api/knowledge')
-    const kRes = await safeFetch(() => getDocuments(), 'knowledge')
-    stats.value.knowledgeDocs = kRes?.documents?.length || 0
-
-    const { getIMInstances } = await import('@/api/im-channels')
-    const imRes = await safeFetch(() => getIMInstances(), 'im-channels')
-    stats.value.imChannels = imRes?.length || 0
-
-    const { getLLMConfig } = await import('@/api/config')
-    const llmRes = await safeFetch(() => getLLMConfig(), 'llm-config')
-    stats.value.llmProviders = Object.keys(llmRes?.providers || {}).length
+    stats.value.knowledgeDocs = (kRes.status === 'fulfilled' ? kRes.value?.documents?.length : null) || 0
+    stats.value.imChannels = (imRes.status === 'fulfilled' ? imRes.value?.length : null) || 0
+    stats.value.llmProviders = Object.keys((llmRes.status === 'fulfilled' ? llmRes.value?.providers : null) || {}).length
   } finally {
-    // 从 Runtime 数据填充 tasksRunToday（替代硬编码 0）
     stats.value.tasksRunToday = runtime.completedTodayCount.value + runtime.failedTodayCount.value
     loading.value = false
     lastRefreshed.value = new Date()

@@ -16,15 +16,9 @@ import {
   Legend,
 } from 'chart.js'
 import SuccessRateGauge from './SuccessRateGauge.vue'
+import type { DashboardMetrics } from '@/composables/useDashboardRuntime'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
-
-export interface DashboardMetrics {
-  tasksPerDay: { date: string; completed: number; failed: number }[]
-  avgCompletionTime: number
-  failureRate: number
-  totalTasks: number
-}
 
 const props = defineProps<{ metrics: DashboardMetrics }>()
 
@@ -37,14 +31,14 @@ const chartData = computed(() => ({
     {
       label: 'Completed',
       data: props.metrics.tasksPerDay.map((d) => d.completed),
-      borderColor: 'var(--hc-success, #22c55e)',
+      borderColor: '#22c55e',
       backgroundColor: 'rgba(34, 197, 94, 0.1)',
       tension: 0.3,
     },
     {
       label: 'Failed',
       data: props.metrics.tasksPerDay.map((d) => d.failed),
-      borderColor: 'var(--hc-error, #ef4444)',
+      borderColor: '#ef4444',
       backgroundColor: 'rgba(239, 68, 68, 0.1)',
       tension: 0.3,
     },
@@ -58,18 +52,18 @@ const chartOptions = {
     legend: {
       display: true,
       position: 'top' as const,
-      labels: { color: 'var(--hc-text-muted)', font: { size: 11 } },
+      labels: { color: '#888', font: { size: 11 } },
     },
   },
   scales: {
     x: {
-      ticks: { color: 'var(--hc-text-muted)', font: { size: 10 } },
-      grid: { color: 'var(--hc-border)' },
+      ticks: { color: '#888', font: { size: 10 } },
+      grid: { color: '#333' },
     },
     y: {
       beginAtZero: true,
-      ticks: { color: 'var(--hc-text-muted)', font: { size: 10 }, stepSize: 1 },
-      grid: { color: 'var(--hc-border)' },
+      ticks: { color: '#888', font: { size: 10 }, stepSize: 1 },
+      grid: { color: '#333' },
     },
   },
 }
@@ -99,7 +93,7 @@ const isEmpty = computed(() => props.metrics.totalTasks === 0)
 
 <template>
   <div class="dsc">
-    <button class="dsc__header" @click="collapsed = !collapsed">
+    <button class="dsc__header" :aria-expanded="!collapsed" @click="collapsed = !collapsed">
       <span class="dsc__title">{{ t('dashboard.analytics', 'Analytics') }}</span>
       <span class="dsc__chevron" :class="{ 'dsc__chevron--collapsed': collapsed }">&#9660;</span>
     </button>

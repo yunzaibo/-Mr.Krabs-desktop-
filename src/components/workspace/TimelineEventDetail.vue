@@ -7,16 +7,20 @@
  *
  * 无障碍：role="region" + :aria-label。
  */
-import type { RuntimeEvent } from '@/types/timeline'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
-  event: RuntimeEvent
+  event: { type: string; timestamp: string; payload?: { summary?: string; metadata?: Record<string, unknown> } }
   expanded: boolean
 }>()
 
 function formatTimestamp(iso: string): string {
+  if (!iso) return ''
   try {
     const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return iso
     return d.toLocaleString()
   } catch {
     return iso
@@ -32,18 +36,18 @@ function formatTimestamp(iso: string): string {
     :aria-label="`Event detail: ${props.event.type}`"
   >
     <div class="hc-event-detail__row">
-      <span class="hc-event-detail__label">Type</span>
+      <span class="hc-event-detail__label">{{ t('timeline.detail.type', 'Type') }}</span>
       <span class="hc-event-detail__type">{{ props.event.type }}</span>
     </div>
 
     <div class="hc-event-detail__row">
-      <span class="hc-event-detail__label">Timestamp</span>
+      <span class="hc-event-detail__label">{{ t('timeline.detail.timestamp', 'Timestamp') }}</span>
       <span class="hc-event-detail__value">{{ formatTimestamp(props.event.timestamp) }}</span>
     </div>
 
     <template v-if="props.event.payload">
       <div v-if="props.event.payload.summary" class="hc-event-detail__row">
-        <span class="hc-event-detail__label">Summary</span>
+        <span class="hc-event-detail__label">{{ t('timeline.detail.summary', 'Summary') }}</span>
         <span class="hc-event-detail__value">{{ props.event.payload.summary }}</span>
       </div>
 
@@ -51,7 +55,7 @@ function formatTimestamp(iso: string): string {
         v-if="props.event.payload.metadata && Object.keys(props.event.payload.metadata).length > 0"
         class="hc-event-detail__metadata"
       >
-        <div class="hc-event-detail__label">Metadata</div>
+        <div class="hc-event-detail__label">{{ t('timeline.detail.metadata', 'Metadata') }}</div>
         <div class="hc-event-detail__metadata-grid">
           <template v-for="(val, key) in props.event.payload.metadata" :key="String(key)">
             <span class="hc-event-detail__meta-key">{{ key }}</span>
@@ -62,7 +66,7 @@ function formatTimestamp(iso: string): string {
     </template>
 
     <div v-if="!props.event.payload" class="hc-event-detail__empty">
-      No payload data
+      {{ t('timeline.detail.noPayload', 'No payload data') }}
     </div>
   </div>
 </template>
