@@ -118,6 +118,7 @@ function openWorkspace() {
       <div class="task-card__header">
         <span class="task-card__skill-name">{{ skillName }}</span>
         <span class="task-card__status-badge" :class="`task-card__status-badge--${status}`">
+          <span v-if="status === 'running'" class="task-card__pulse-dot" />
           {{ statusLabel }}
         </span>
         <span v-if="elapsed != null || status === 'running'" class="task-card__elapsed">
@@ -250,6 +251,21 @@ function openWorkspace() {
 @keyframes task-card-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+.task-card__pulse-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hc-accent, #2563eb);
+  margin-right: 4px;
+  vertical-align: middle;
+  animation: hc-live-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-card__pulse-dot { animation: none; opacity: 1; }
 }
 
 /* Subtitle */
