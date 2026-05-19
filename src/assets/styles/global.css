@@ -389,6 +389,45 @@ select.hc-input:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Live status pulse — GPU-accelerated box-shadow pulse */
+@keyframes hc-live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--hc-live-pulse-color, rgba(50, 213, 131, 0.4)); }
+  50% { box-shadow: 0 0 0 4px transparent; }
+}
+
+.hc-live-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hc-success, #32d583);
+  animation: hc-live-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.hc-live-pulse--error {
+  background: var(--hc-error, #f56565);
+  --hc-live-pulse-color: rgba(245, 101, 101, 0.4);
+}
+
+.hc-live-pulse--warning {
+  background: var(--hc-warning, #f0b429);
+  --hc-live-pulse-color: rgba(240, 180, 41, 0.4);
+}
+
+.hc-live-pulse--muted {
+  background: var(--hc-text-muted, #5c5c6b);
+  animation: none;
+}
+
+/* Reduced motion: disable all pulse animations */
+@media (prefers-reduced-motion: reduce) {
+  .hc-live-pulse {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* ─── App shell — hex texture & content highlight (prototype) ─ */
 .hc-app {
   position: relative;
