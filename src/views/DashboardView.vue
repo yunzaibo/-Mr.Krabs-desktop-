@@ -7,6 +7,7 @@ import { useDashboardRuntime } from '@/composables/useDashboardRuntime'
 import { RefreshCw, Activity } from 'lucide-vue-next'
 import RuntimeEventsCard from '@/components/dashboard/RuntimeEventsCard.vue'
 import RuntimeHealthCard from '@/components/dashboard/RuntimeHealthCard.vue'
+import DashboardStatsChart from '@/components/dashboard/DashboardStatsChart.vue'
 import PageToolbar from '@/components/common/PageToolbar.vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import SegmentedControl from '@/components/common/SegmentedControl.vue'
@@ -15,6 +16,7 @@ const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
 const runtime = useDashboardRuntime()
+const { dashboardMetrics } = runtime
 
 const dashTab = ref('today')
 const dashTabs = computed(() => [
@@ -376,6 +378,11 @@ function navigateTo(path: string) {
         <RuntimeHealthCard :health="runtime.healthStatus.value" />
         <RuntimeEventsCard :events="runtime.recentEvents.value" />
       </div>
+
+      <!-- Analytics Section -->
+      <div class="hc-dash__analytics">
+        <DashboardStatsChart :metrics="dashboardMetrics" />
+      </div>
     </div>
   </div>
 </template>
@@ -687,5 +694,9 @@ function navigateTo(path: string) {
 
 .hc-dash__empty-runtime-btn:hover {
   opacity: 0.85;
+}
+
+.hc-dash__analytics {
+  margin-top: 24px;
 }
 </style>

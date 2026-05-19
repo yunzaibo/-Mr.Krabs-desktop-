@@ -39,6 +39,13 @@ export interface DashboardHealthStatus {
   recoveries: RecoverySummary[]
 }
 
+export interface DashboardMetrics {
+  tasksPerDay: { date: string; completed: number; failed: number }[]
+  avgCompletionTime: number
+  failureRate: number
+  totalTasks: number
+}
+
 export function useDashboardRuntime() {
   const runtimeStore = useRuntimeStore()
   const taskStore = useTaskStore()
@@ -105,6 +112,42 @@ export function useDashboardRuntime() {
     }
   })
 
+  /** Dashboard 统计指标 */
+  const dashboardMetrics = computed<DashboardMetrics>(() => {
+    const allTasks = taskStore.completedTasks || []
+    const completed = allTasks.filter((t) => t.status === 'completed')
+    const failed = allTasks.filter((t) => t.status === 'failed')
+    const total = completed.length + failed.length
+
+    const now = new Date()
+    const tasksPerDay = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(now)
+      date.setDate(date.getDate() - (6 - i))
+      const dateStr = date.toISOString().split('T')[0] ?? ''
+      return {
+        date: dateStr,
+        completed: completed.filter((t) => t.metadata?.completedAt?.startsWith(dateStr)).length,
+        failed: failed.filter((t) => t.metadata?.completedAt?.startsWith(dateStr)).length,
+      }
+    })
+
+    // Use metadata.completedAt timestamps to compute duration between start and completion
+    const durations = completed
+      .filter((t) => t.metadata?.completedAt)
+      .map((t) => {
+        const completedAt = new Date(t.metadata!.completedAt!).getTime()
+        const createdAt = new Date(t.metadata?.createdAt || t.id).getTime()
+        return Math.max(0, (completedAt - createdAt) / 1000)
+      })
+    const avgCompletionTime = durations.length > 0
+      ? durations.reduce((a: number, b: number) => a + b, 0) / durations.length
+      : 0
+
+    const failureRate = total > 0 ? (failed.length / total) * 100 : 0
+
+    return { tasksPerDay, avgCompletionTime, failureRate, totalTasks: total }
+  })
+
   /** 从 TaskStore + RuntimeStore 合成活动列表 */
   const activityItems = computed<DashboardActivityItem[]>(() => {
     const items: DashboardActivityItem[] = []
@@ -148,5 +191,6 @@ export function useDashboardRuntime() {
     recoverySummaries,
     healthStatus,
     activityItems,
+    dashboardMetrics,
   }
 }
