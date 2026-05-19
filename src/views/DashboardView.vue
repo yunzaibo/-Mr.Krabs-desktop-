@@ -159,11 +159,11 @@ async function fetchStats() {
 
     const sessions = (sessionRes.status === 'fulfilled' ? sessionRes.value?.sessions : null) || []
     stats.value.totalSessions = sessions.length
-    recentActivity.value = sessions.slice(0, 3).map((s: Record<string, unknown>) => ({
-      id: s.id as string,
-      title: (s.title as string) || t('chat.newSessionDefault'),
+    recentActivity.value = sessions.slice(0, 3).map((s) => ({
+      id: s.id,
+      title: s.title || t('chat.newSessionDefault'),
       type: 'chat' as const,
-      time: s.updated_at as string,
+      time: s.updated_at,
     }))
 
     stats.value.activeAgents = (agentRes.status === 'fulfilled' ? agentRes.value?.roles?.length : null) || 0

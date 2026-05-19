@@ -30,8 +30,10 @@ const baseGroup: TimelineNarrativeGroup = {
   title: 'Task Created',
   description: 'A new task was initialized',
   startTime: '2026-05-19T12:00:00Z',
+  endTime: '2026-05-19T12:00:01.200Z',
   durationMs: 1200,
   eventCount: 3,
+  significance: 'minor',
   isCollapsed: false,
   children: [],
 }

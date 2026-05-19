@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import DashboardStatsChart, { type DashboardMetrics } from '../DashboardStatsChart.vue'
+import DashboardStatsChart from '../DashboardStatsChart.vue'
+import type { DashboardMetrics } from '@/composables/useDashboardRuntime'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
