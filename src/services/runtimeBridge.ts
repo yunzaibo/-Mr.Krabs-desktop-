@@ -99,7 +99,9 @@ export async function executeChatTask(taskId: string): Promise<TaskResult> {
 
     return result
   } catch (e) {
-    // If already converted to ApiError (e.g., RT_NO_OUTPUT branch), rethrow directly
+    // If already converted to ApiError (e.g., RT_NO_OUTPUT branch), rethrow directly.
+    // ApiError has { code, message, status?, cause? } — no __brand.
+    // BridgeError has { __brand, code, message, cause? } — excluded by !('__brand' in e).
     if (e && typeof e === 'object' && 'code' in e && 'message' in e && !('__brand' in e)) {
       throw e
     }
