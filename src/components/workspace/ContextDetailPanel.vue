@@ -23,9 +23,34 @@ import TaskActionBar from '@/components/workspace/TaskActionBar.vue'
 import ContextCard from '@/components/inspector/ContextCard.vue'
 import KeyValueRow from '@/components/inspector/KeyValueRow.vue'
 import MarkdownRenderer from '@/components/chat/MarkdownRenderer.vue'
+import TaskStatusIndicator from './TaskStatusIndicator.vue'
+import RecoveryActionPanel from './RecoveryActionPanel.vue'
+import { useWorkspace } from '@/composables/useWorkspace'
+import { useRuntimeStore } from '@/stores/runtime'
+import type { TaskStatus } from '@/types'
 
 const { t } = useI18n()
 const router = useRouter()
+const { selectedRecoveryProjection, selectedTaskId } = useWorkspace()
+const runtimeStore = useRuntimeStore()
+
+// Recovery handlers
+const isRecoveryExecuting = ref(false)
+
+async function handleRecoveryRetry() {
+  if (!selectedTaskId.value) return
+  isRecoveryExecuting.value = true
+  try {
+    await runtimeStore.executeTask(selectedTaskId.value)
+  } finally {
+    isRecoveryExecuting.value = false
+  }
+}
+
+function handleRecoveryCleanRestart() {
+  if (!selectedTaskId.value) return
+  runtimeStore.destroyContext(selectedTaskId.value)
+}
 
 const props = defineProps<{
   projection: WorkspaceContextProjection | null
@@ -43,6 +68,11 @@ const execOutputExpanded = ref(false)
 
 // Advanced toggle — 所有 section 共享
 const advancedExpanded = ref(false)
+
+// Task status narrow cast (workspace projection uses `string`, TaskStatusIndicator needs TaskStatus)
+const taskStatus = computed<TaskStatus | undefined>(
+  () => props.projection?.task?.status as TaskStatus | undefined,
+)
 
 watch(
   () => props.projection?.health?.hasIssues,
@@ -191,9 +221,10 @@ function getGroupLabel(group: string): string {
 
       <!-- Task section -->
       <ContextCard :eyebrow="t('workspace.sections.task')" :title="projection.task.goal || projection.taskId.slice(0, 8)">
-        <KeyValueRow
-          :label="t('workspace.field.status')"
-          :value="projection.task.status"
+        <TaskStatusIndicator
+          v-if="projection.task && taskStatus"
+          :status="taskStatus"
+          :elapsed="projection.task.elapsed"
         />
         <KeyValueRow
           v-if="projection.task.progress !== undefined"
@@ -448,6 +479,17 @@ function getGroupLabel(group: string): string {
           />
         </div>
       </ContextCard>
+
+      <!-- Recovery Action Panel -->
+      <RecoveryActionPanel
+        v-if="selectedRecoveryProjection"
+        :assessment="selectedRecoveryProjection.summary"
+        :resolution-state="selectedRecoveryProjection.resolutionState"
+        :corruption-report="selectedRecoveryProjection.corruptionReport"
+        :is-executing="isRecoveryExecuting"
+        @retry="handleRecoveryRetry"
+        @clean-restart="handleRecoveryCleanRestart"
+      />
 
       <!-- Advanced toggle -->
       <button

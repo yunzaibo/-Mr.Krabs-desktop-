@@ -1732,6 +1732,25 @@ export default {
       taskId: '任务 ID',
       advanced: '详细信息',
     },
+    status: {
+      running: '运行中',
+      pending: '等待中',
+      completed: '已完成',
+      failed: '失败',
+      cancelled: '已取消',
+    },
+    recovery: {
+      title: '恢复',
+      tryAgain: '重试',
+      resetContext: '重置上下文',
+      dismiss: '忽略',
+      lastChecked: '上次检查',
+      recoverable: '可恢复',
+      unrecoverable: '不可恢复',
+      corrupted: '已损坏',
+      confirmReset: '确定要重置上下文吗？这将清除所有恢复状态。',
+      confirmDismiss: '确定要忽略此失败吗？',
+    },
   },
 
   // 确认对话框
