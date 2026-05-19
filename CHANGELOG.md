@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.6.0 (2026-05-19)
+
+### Features — Runtime Timeline + Dashboard Analytics
+
+Phase 7：Workspace Timeline 可视化增强 + Dashboard 高级统计图表。
+
+#### F-003: Runtime Timeline Panel
+- **TimelineFilterBar 组件**：5 类 filter chip（All/Task/Context/Skill/Recovery）+ count badge，ARIA tablist 无障碍
+- **TimelineEventDetail 组件**：手风琴展开事件详情（type/timestamp/payload/metadata），i18n 支持
+- **filteredTimelineProjection**：`useWorkspace` composable 新增分类过滤 computed，最多 200 事件
+- **5 语义颜色通道**：Creation/Execution/Success/Failure/System
+
+#### F-004: Dashboard Advanced Stats
+- **DashboardStatsChart 组件**：Chart.js 折线图 + SuccessRateGauge + 3 指标卡片，手风琴折叠
+- **SuccessRateGauge 组件**：SVG 环形 gauge，颜色编码（>=95% green, 85-94% yellow, <85% red）
+- **dashboardMetrics computed**：7 天 tasksPerDay、avgCompletionTime、failureRate、totalTasks
+- **Chart.js 懒加载**：动态 import 避免影响初始渲染
+
+#### 工程改进
+- `fetchStats` 7 个串行 API 调用并行化（Promise.allSettled）
+- `categoryMap` 提取为模块级常量，补充缺失事件类型
+- 审查修复：NaN 防护、UTC 时区修复、i18n 覆盖、无障碍增强
+
+#### 文件变更
+- 新增 `src/components/dashboard/DashboardStatsChart.vue`
+- 新增 `src/components/dashboard/SuccessRateGauge.vue`
+- 新增 `src/components/workspace/TimelineFilterBar.vue`
+- 新增 `src/components/workspace/TimelineEventDetail.vue`
+- 新增 6 个测试文件（40+ 测试）
+- 修改 `src/composables/useDashboardRuntime.ts`：dashboardMetrics computed
+- 修改 `src/composables/useWorkspace.ts`：filteredTimelineProjection + categoryMap
+- 修改 `src/views/DashboardView.vue`：Analytics section + API 并行化
+- 修改 `src/types/workspace.ts`：TimelineEventCategory + TimelineItemProjection 扩展
+
 ## v0.5.0 (2026-05-19)
 
 ### Runtime 增强 — Task 实时状态 + Recovery 操作界面
