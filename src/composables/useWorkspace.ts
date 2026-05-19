@@ -108,6 +108,20 @@ export function useWorkspace() {
     return projectTaskResult(task, ctx ?? undefined)
   })
 
+  /** 选中 Task 的 Recovery 投影 */
+  const selectedRecoveryProjection = computed(() => {
+    if (!selectedTaskId.value) return null
+    const summary = runtimeStore.getRecoverySummary(selectedTaskId.value)
+    if (!summary) return null
+    const resolutionState = runtimeStore.getResolutionState(selectedTaskId.value)
+    const corruptionReport = runtimeStore.detectCorruption(selectedTaskId.value)
+    return {
+      summary,
+      resolutionState,
+      corruptionReport: corruptionReport ?? undefined,
+    }
+  })
+
   // ── Actions ───────────────────────────────────────
 
   function selectTask(taskId: string | null) {
@@ -125,6 +139,7 @@ export function useWorkspace() {
     selectedTimelineProjection,
     selectedNarrativeProjection,
     selectedResultProjection,
+    selectedRecoveryProjection,
     // actions
     selectTask,
     // pass-through (read-only)

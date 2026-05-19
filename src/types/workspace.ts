@@ -88,6 +88,13 @@ export interface WorkspaceContextProjection {
     hasIssues: boolean
     severity?: 'warning' | 'critical'
   }
+
+  /** UX section — Recovery 操作状态 */
+  recovery?: {
+    summary: import('@/types/recovery').RecoverySummary | null
+    resolutionState: 'pending' | 'resolved' | 'failed'
+    corruptionReport?: import('@/types/recovery').CorruptionReport
+  }
 }
 
 // ─── Timeline 投影 ──────────────────────────────────
