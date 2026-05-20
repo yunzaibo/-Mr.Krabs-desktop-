@@ -35,9 +35,19 @@
 - 工作流/BPMN 系统过度低代码化，复杂且脆弱
 - 云端 Agent 存在数据安全和隐私问题
 
-**Mr.Krabs Desktop 不是聊天机器人，不是 Workflow Builder，而是 Local-first AI Runtime Workspace。**
+  **Mr.Krabs Desktop 不是聊天机器人，不是 Workflow Builder，而是 Local-first AI Runtime Workspace。**
 
-用户用自然语言启动任务，系统在本地 Runtime 中持续运行，上下文、资产、执行状态跨会话持久化。数据完全由用户控制。
+  用户用自然语言启动任务，系统在本地 Runtime 中持续运行，上下文、资产、执行状态跨会话持久化。数据完全由用户控制。
+
+### **项目预览图：**
+
+![项目预览图 1](docs/images/image-20260520124920400.png)
+
+![项目预览图 2](docs/images/image-20260520125013360.png)
+
+![项目预览图 3](docs/images/image-20260520125035875.png)
+
+![项目预览图 4](docs/images/image-20260520125134039.png)
 
 ## 核心技术亮点
 
